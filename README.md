@@ -1,8 +1,8 @@
-# Michaelis-Menten Kinetics and Inhibition Calculator
+# Michaelis-Menten Kinetics and Inhibition
 
 ## Description
 
-This Michaelis-Menten Kinetics and Inhibition Calculator is a tool designed for the Biochemistry Lab to analyze enzyme kinetics data using the Michaelis-Menten model. It allows students to input their experimental data and generate kinetics curves with fitted parameters. The calculator is specifically designed to run in Google Colab.
+This Michaelis-Menten Kinetics and Inhibition notebook is a tool designed for the Biochemistry Lab to analyze enzyme kinetics data using the Michaelis-Menten model. It allows students to input their experimental data and generate kinetics curves with fitted parameters. The calculator is specifically designed to run in Google Colab.
 
 ## Features
 
