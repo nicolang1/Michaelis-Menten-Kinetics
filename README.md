@@ -97,9 +97,7 @@ This project is primarily for educational use in the Biochemistry Lab. If you ha
 
 ## License
 
-This project is licensed under the **Apache License 2.0** [1]. See the [LICENSE](LICENSE) file for the full license text.
-
-> **Note on license compatibility:** The Apache License 2.0 remains appropriate for this project in its updated HTML format. No changes to the license are required simply because the tool was converted from a Jupyter Notebook to an HTML file — the license covers the work regardless of the form it takes (source or object form) [1].
+This project is licensed under the **Apache License 2.0**. See the [LICENSE](LICENSE) file for the full license text.
 
 ---
 
