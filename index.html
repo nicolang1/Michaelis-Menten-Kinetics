@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Michaelis-Menten Kinetics Analyzer</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+    <style>
+        :root{--primary:#890000;--primary-light:#890000;--accent:#e8b84b;--bg:#FFFFFF;--card:#fff;--border:#707271;--text:#000000;--text-light:#000000;--success:#27ae60;--error:#e74c3c;--shadow:0 4px 24px rgba(44,62,122,.10)}
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        header{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;padding:28px 40px 20px;box-shadow:0 2px 12px rgba(44,62,122,.18)}
+        header h1{font-size:1.7rem;font-weight:700}header p{font-size:.97rem;opacity:.85;margin-top:5px}
+        .container{max-width:1200px;margin:0 auto;padding:30px 20px}
+        .tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+        .tab-btn{padding:10px 22px;border:2px solid var(--border);background:var(--card);border-radius:8px 8px 0 0;cursor:pointer;font-size:.97rem;font-weight:600;color:var(--text-light);transition:.2s}
+        .tab-btn:hover{background:#FFFFFF;border-color:var(--primary-light)}
+        .tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+        .card{background:var(--card);border-radius:0 12px 12px 12px;box-shadow:var(--shadow);padding:28px;border:1px solid var(--border)}
+        .card h2{color:var(--primary);font-size:1.2rem;margin-bottom:6px}
+        .card .subtitle{color:var(--text-light);font-size:.93rem;margin-bottom:18px}
+        .instructions{background:#E2E6E6;border-left:4px solid var(--primary-light);border-radius:6px;padding:14px 18px;margin-bottom:20px;font-size:.93rem}
+        .instructions b{color:var(--primary)}
+        .format-box{background:#FFFFFF;border:1px dashed var(--border);border-radius:6px;padding:12px 16px;margin-bottom:16px;font-size:.88rem;color:var(--text-light)}
+        .format-box code{background:#FFFFFF;padding:1px 5px;border-radius:3px;font-size:.86rem}
+        .section-label{font-weight:600;color:var(--primary);font-size:.97rem;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+        .section-label .badge{background:var(--accent);color:#333;font-size:.78rem;padding:2px 8px;border-radius:10px;font-weight:700}
+        textarea{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:10px 12px;font-family:Consolas,monospace;font-size:.85rem;resize:vertical;background:#ffffff;color:var(--text);transition:.2s}
+        textarea:focus{outline:none;border-color:var(--primary-light);background:#fff}
+        .alpha-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+        .alpha-item label{display:block;font-weight:600;color:var(--primary-light);margin-bottom:5px;font-size:.92rem}
+        .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+        .btn{padding:10px 26px;border:none;border-radius:7px;font-size:.97rem;font-weight:600;cursor:pointer;transition:.18s}
+        .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-light);transform:translateY(-1px)}
+        .btn-outline{background:#fff;color:var(--primary);border:2px solid var(--primary)}.btn-outline:hover{background:#ffffff}
+        .results-section{margin-top:24px}.results-section h3{color:var(--primary);font-size:1.05rem;margin-bottom:14px;border-bottom:2px solid var(--border);padding-bottom:7px}
+        .params-grid{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+        .param-card{background:linear-gradient(135deg,#FFFFFF,#FFFFFF);border:1.5px solid var(--border);border-radius:9px;padding:12px 20px;min-width:140px;text-align:center}
+        .param-card .param-label{font-size:.82rem;color:var(--text-light);margin-bottom:3px}
+        .param-card .param-value{font-size:1.18rem;font-weight:700;color:var(--primary)}
+        .param-card .param-unit{font-size:.78rem;color:var(--text-light)}
+        .plot-container{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;background:#fff}
+        .status-msg{padding:10px 16px;border-radius:7px;font-size:.93rem;margin-top:12px;display:none}
+        .status-msg.error{background:#FFFFFF;color:var(--error);border:1px solid #f5c6cb;display:block}
+        .status-msg.success{background:#FFFFFF;color:var(--success);border:1px solid #a9dfbf;display:block}
+        .status-msg.info{background:#FFFFFF;color:var(--primary);border:1px solid var(--border);display:block}
+        .tab-panel{display:none}.tab-panel.active{display:block}
+        .sub-tabs{display:flex;gap:4px;margin-bottom:16px}
+        .sub-tab-btn{padding:6px 16px;border:1.5px solid var(--border);background:#FFFFFF;border-radius:6px;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--text-light);transition:.18s}
+        .sub-tab-btn.active{background:var(--primary-light);color:#fff;border-color:var(--primary-light)}
+        .sub-panel{display:none}.sub-panel.active{display:block}
+        .equation{font-family:Georgia,serif;font-style:italic;font-size:1.05rem;color:#000000;background:#FFFFFF;padding:8px 16px;border-radius:6px;display:inline-block;margin-bottom:10px}
+        footer{text-align:center;padding:20px;color:var(--text-light);font-size:.85rem;margin-top:20px;border-top:1px solid var(--border)}
+        .settings-panel{background:#FFFFFF;border:1.5px solid var(--border);border-radius:8px;padding:16px;margin-bottom:18px}
+        .settings-panel summary{cursor:pointer;font-weight:600;color:var(--primary);font-size:.95rem;padding:4px 0}
+        .settings-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px}
+        .setting-item label{display:block;font-size:.82rem;color:var(--text-light);margin-bottom:3px;font-weight:600}
+        .setting-item input{width:100%;padding:6px 10px;border:1.5px solid var(--border);border-radius:5px;font-size:.88rem;background:#fff}
+        .setting-item input:focus{outline:none;border-color:var(--primary-light)}
+        .vel-table{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px}
+        .vel-table th{background:var(--primary);color:#fff;padding:8px 12px;text-align:center}
+        .vel-table td{padding:7px 12px;text-align:center;border-bottom:1px solid var(--border)}
+        .vel-table tr:nth-child(even){background:#FFFFFF}
+        .cb-row{display:flex;align-items:center;gap:8px;margin:10px 0}
+        .cb-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary)}
+        .cb-row label{font-size:.92rem;font-weight:600;color:var(--text-light)}
+        .debug-box{background:#FFFFFF;border:1px solid #FFFFFF;border-radius:6px;padding:10px;margin-top:8px;font-size:.82rem;font-family:Consolas,monospace;max-height:150px;overflow:auto;display:none}
+        @media(max-width:700px){.settings-grid,.alpha-grid{grid-template-columns:1fr}.container{padding:16px 8px}.card{padding:16px}header{padding:18px 16px}header h1{font-size:1.2rem}}
+    </style>
+</head>
+<body>
+<header>
+    <h1>Michaelis-Menten Kinetics &amp; Inhibition Analyzer</h1>
+    <p>Alkaline Phosphatase Enzyme Kinetics</p>
+</header>
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('mm-kinetics',this)">Kinetics</button>
+        <button class="tab-btn" onclick="switchTab('mm-inhibition',this)">Inhibition - % inhibition and IC50</button>
+        <button class="tab-btn" onclick="switchTab('mm-inhibition-w2',this)">Inhibition - α's </button>
+    </div>
+
+    <!-- MM-KINETICS -->
+    <div id="tab-mm-kinetics" class="tab-panel active"><div class="card">
+        <h2>Michaelis-Menten Kinetics</h2>
+        <div class="subtitle">Determine Vmax and Km from raw absorbance (A405) vs. time data or pre-calculated velocity data.</div>
+        <div class="instructions">
+            <b>Raw Kinetic Data:</b> Paste A405 vs Time table. Row 1 = substrate concentrations. App calculates slopes automatically.<br>
+            <b></b><br>
+            <b>Pre-calculated Velocities:</b> Two columns: [substrate] and velocity.</div>
+        <details class="settings-panel"><summary>&#9881;&#65039; Graph &amp; Fit Settings</summary>
+            <div class="settings-grid">
+                <div class="setting-item"><label>MM Plot Title</label><input id="kin-plot-title" value="Alkaline Phosphatase Michaelis-Menten Kinetics"></div>
+                <div class="setting-item"><label>MM X-Axis</label><input id="kin-x-label" value="[pNPP] (&#181;M)"></div>
+                <div class="setting-item"><label>MM Y-Axis</label><input id="kin-y-label" value="Initial Velocity (V&#8320;)"></div>
+                <div class="setting-item"><label>Raw Plot Title</label><input id="kin-raw-title" value="Raw Kinetic Data - A405 vs Time"></div>
+                <div class="setting-item"><label>Raw X-Axis</label><input id="kin-raw-x-label" value="Time (min)"></div>
+                <div class="setting-item"><label>Raw Y-Axis</label><input id="kin-raw-y-label" value="A405"></div>
+                <div class="setting-item"><label>Velocity Units</label><input id="kin-vel-units" value="&#916;A405/min"></div>
+                <div class="setting-item"><label>Substrate Units</label><input id="kin-sub-units" value="&#181;M"></div>
+                <div class="setting-item"><label>Time Range (min&#8211;max)</label><div style="display:flex;gap:6px"><input type="number" id="kin-time-min" placeholder="Auto" step="any" style="width:48%"><input type="number" id="kin-time-max" placeholder="Auto" step="any" style="width:48%"></div></div>
+            </div></details>
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" onclick="switchSubTab('kin','raw',this)">Raw Kinetic Data (A405 vs Time)</button>
+            <button class="sub-tab-btn" onclick="switchSubTab('kin','velocity',this)">Pre-calculated Velocities</button>
+        </div>
+        <div id="kin-sub-raw" class="sub-panel active">
+            <div class="format-box"><b>Paste from Excel (tab-separated):</b><br>Row 1: <code>[blank]</code>|<code>0</code>|<code>10</code>|... (concentrations)<br>Row 2: <code>[blank]</code>|<code>Cell 1</code>|... (optional)<br>Row 3: <code>min</code>|<code>A</code>|...<br>Row 4+: time|A405 values</div>
+            <div class="cb-row"><input type="checkbox" id="kin-avg-reps" checked><label for="kin-avg-reps">Average replicate concentrations</label></div>
+            <textarea id="kin-raw-input" rows="10" placeholder="Paste A405 vs time data here..."></textarea>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="processKineticsRaw()">Plot &amp; Fit</button>
+                <button class="btn btn-outline" onclick="loadKinExample()">Load Example</button>
+                <button class="btn btn-outline" onclick="clearPanel('kin')">Clear</button>
+            </div>
+        </div>
+        <div id="kin-sub-velocity" class="sub-panel">
+            <div class="format-box"><b>Two columns (tab-separated):</b> [pNPP] | Rate</div>
+            <textarea id="kin-vel-input" rows="8" placeholder="Paste velocity data here..."></textarea>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="processKineticsVel()">&#x1F4CA; Fit MM</button>
+                <button class="btn btn-outline" onclick="clearPanel('kin')">Clear</button>
+            </div>
+        </div>
+        <div id="kin-status" class="status-msg"></div>
+        <div id="kin-results" class="results-section" style="display:none">
+            <h3>Results</h3>
+            <div id="kin-raw-section" style="display:none">
+                <div class="section-label">Raw Kinetic Data - A405 vs Time</div>
+                <div class="plot-container"><div id="plot-kin-raw"></div></div>
+                <div id="kin-vel-table"></div>
+            </div>
+            <div class="section-label" style="margin-top:18px">Michaelis-Menten Fit</div>
+            <div id="kin-equation" class="equation"></div>
+            <div id="kin-params" class="params-grid"></div>
+            <div class="plot-container"><div id="plot-kin-mm"></div></div>
+        </div>
+    </div></div>
+
+    <!-- MM-INHIBITION -->
+    <div id="tab-mm-inhibition" class="tab-panel"><div class="card">
+        <h2>Michaelis-Menten - Inhibition</h2>
+        <div class="subtitle">Analyze inhibitor effects on enzyme activity.</div>
+        <div class="instructions">
+            <b>Raw A405 vs Time:</b> Paste data with inhibitor names in Row 1. Generates plot + velocity table.<br>
+            <b></b><br>
+            <b>% Inhibition &amp; IC50:</b> Row 1 = inhibitor concentrations. Calculates slopes, % inhibition, fits IC50.</div>
+        <details class="settings-panel"><summary>&#9881;&#65039; Graph &amp; Fit Settings</summary>
+    		<div class="settings-grid">
+        		<div class="setting-item"><label>Raw Plot Title</label><input id="inh-raw-title" value="Inhibitor Preincubation"></div>
+       			<div class="setting-item"><label>Raw X-Axis</label><input id="inh-raw-x-label" value="Time (min)"></div>
+        		<div class="setting-item"><label>Raw Y-Axis</label><input id="inh-raw-y-label" value="A405"></div>
+        		<div class="setting-item"><label>IC50 Plot Title</label><input id="inh-ic50-title" value="Alkaline Phosphatase Inhibition - IC50"></div>
+        		<div class="setting-item"><label>IC50 X-Axis</label><input id="inh-ic50-x-label" value="[Inhibitor] (&#181;M)"></div>
+        		<div class="setting-item"><label>IC50 Y-Axis</label><input id="inh-ic50-y-label" value="% Inhibition"></div>
+       			<div class="setting-item"><label>Velocity Units</label><input id="inh-vel-units" value="&#916;A405/min"></div>
+        		<div class="setting-item"><label>Concentration Units</label><input id="inh-conc-units" value="&#181;M"></div>
+        		<div class="setting-item"><label>Time Range</label><div style="display:flex;gap:6px"><input type="number" id="inh-time-min" placeholder="Auto" step="any" style="width:48%"><input type="number" id="inh-time-max" placeholder="Auto" step="any" style="width:48%"></div></div>
+    		</div></details>
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" onclick="switchSubTab('inh','raw',this)">Raw A405 vs Time</button>
+            <button class="sub-tab-btn" onclick="switchSubTab('inh','pct',this)">% Inhibition &amp; IC50</button>
+        </div>
+        <div id="inh-sub-raw" class="sub-panel active">
+            <div class="format-box">Row 1: <code>[blank]</code>|<code>Citrate</code>|<code>Histidine</code>|...<br>Row 2: optional<br>Row 3: <code>min</code>|<code>A</code>|...<br>Row 4+: time|A405</div>
+            <div class="cb-row"><input type="checkbox" id="inh-avg-reps"><label for="inh-avg-reps">Average replicates with same name</label></div>
+            <textarea id="inh-raw-input" rows="10" placeholder="Paste A405 vs time data here..."></textarea>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="processInhRaw()">Plot &amp; Analyze</button>
+                <button class="btn btn-outline" onclick="loadInhExample()">Load Example</button>
+                <button class="btn btn-outline" onclick="clearPanel('inh')">Clear</button>
+            </div>
+        </div>
+        <div id="inh-sub-pct" class="sub-panel">
+            <div class="format-box"><b>Row 1 = inhibitor CONCENTRATIONS:</b><br><code>[blank]</code>|<code>0</code>|<code>1</code>|<code>4</code>|<code>8</code>|<code>16</code><br>Row 2: optional<br>Row 3: <code>min</code>|<code>A</code>|...<br>Row 4+: time|A405</div>
+            <div class="cb-row"><input type="checkbox" id="ic50-avg-reps" checked><label for="ic50-avg-reps">Average replicate concentrations</label></div>
+            <textarea id="inh-pct-input" rows="10" placeholder="Paste raw A405 vs time data with concentrations in Row 1..."></textarea>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="processInhIC50()">Fit IC50</button>
+                <button class="btn btn-outline" onclick="loadIC50Example()">Load Example</button>
+                <button class="btn btn-outline" onclick="clearPanel('inh')">Clear</button>
+            </div>
+        </div>
+        <div id="inh-status" class="status-msg"></div>
+        <div id="inh-results" class="results-section" style="display:none">
+            <h3>Results</h3>
+            <div id="inh-raw-section" style="display:none">
+                <div class="section-label">Raw A405 vs Time</div>
+                <div class="plot-container"><div id="plot-inh-raw"></div></div>
+                <div id="inh-vel-table"></div>
+            </div>
+            <div id="inh-ic50-section" style="display:none">
+                <div class="section-label">Raw A405 vs Time</div>
+                <div class="plot-container"><div id="plot-inh-ic50-raw"></div></div>
+                <div id="inh-ic50-vel-table"></div>
+                <div class="section-label" style="margin-top:18px">% Inhibition vs [Inhibitor] - IC50 Fit</div>
+                <div id="inh-ic50-equation" class="equation"></div>
+                <div id="inh-ic50-params" class="params-grid"></div>
+                <div class="plot-container"><div id="plot-inh-ic50"></div></div>
+            </div>
+        </div>
+    </div></div>
+
+    <!-- MM-INHIBITION WEEK 2 -->
+    <div id="tab-mm-inhibition-w2" class="tab-panel"><div class="card">
+        <h2>Michaelis-Menten - Inhibition</h2>
+        <div class="subtitle">Compare kinetics under different inhibitor concentrations. Each &#945; dataset is raw A405 vs Time with substrate concentrations in Row 1.</div>
+        <div class="instructions">For each &#945;, paste raw A405 vs Time (same format as MM-Kinetics). Row 1 = substrate concentrations. At least &#945;1 required.</div>
+        <details class="settings-panel"><summary>&#9881;&#65039; Graph &amp; Fit Settings</summary>
+     <div class="settings-grid">
+        <div class="setting-item"><label>MM Plot Title</label><input id="w2-plot-title" value="Alkaline Phosphatase Kinetics - Multiple Inhibitor Conditions"></div>
+         <div class="setting-item"><label>MM X-Axis</label><input id="w2-x-label" value="[pNPP] (&#181;M)"></div>
+         <div class="setting-item"><label>MM Y-Axis</label><input id="w2-y-label" value="Initial Velocity (V&#8320;)"></div>
+         <div class="setting-item"><label>Raw Plot Title</label><input id="w2-raw-title" value="Raw A405 vs Time - All Conditions"></div>
+         <div class="setting-item"><label>Raw X-Axis</label><input id="w2-raw-x-label" value="Time (min)"></div>
+         <div class="setting-item"><label>Raw Y-Axis</label><input id="w2-raw-y-label" value="A405"></div>
+         <div class="setting-item"><label>Velocity Units</label><input id="w2-vel-units" value="&#916;A405/min"></div>
+         <div class="setting-item"><label>Substrate Units</label><input id="w2-sub-units" value="&#181;M"></div>
+         <div class="setting-item"><label>Time Range</label><div style="display:flex;gap:6px"><input type="number" id="w2-time-min" placeholder="Auto" step="any" style="width:48%"><input type="number" id="w2-time-max" placeholder="Auto" step="any" style="width:48%"></div></div>
+     </div></details>
+        <div class="cb-row"><input type="checkbox" id="w2-avg-reps" checked><label for="w2-avg-reps">Average replicate concentrations</label></div>
+        <div class="alpha-grid">
+            <div class="alpha-item"><label>&#945;1 (Control)</label><textarea id="w2-a1" rows="8" placeholder="Paste raw A405 vs time..."></textarea></div>
+            <div class="alpha-item"><label>&#945;2</label><textarea id="w2-a2" rows="8" placeholder="Optional..."></textarea></div>
+            <div class="alpha-item"><label>&#945;3</label><textarea id="w2-a3" rows="8" placeholder="Optional..."></textarea></div>
+            <div class="alpha-item"><label>&#945;4</label><textarea id="w2-a4" rows="8" placeholder="Optional..."></textarea></div>
+        </div>
+		<div class="btn-row">
+		    <button class="btn btn-primary" onclick="processW2()">Compare Curves</button>
+    		<button class="btn btn-outline" onclick="loadW2Example()">Load Example</button>
+    		<button class="btn btn-outline" onclick="clearPanel('w2')">Clear All</button>
+		</div>        <div id="w2-status" class="status-msg"></div>
+        <div id="w2-results" class="results-section" style="display:none">
+            <h3>Results</h3>
+            <div class="section-label">Raw A405 vs Time - All &#945; Conditions</div>
+            <div class="plot-container"><div id="plot-w2-raw"></div></div>
+            <div id="w2-vel-table"></div>
+            <div class="section-label" style="margin-top:18px">Michaelis-Menten Fits</div>
+            <div id="w2-params-all" class="params-grid" style="flex-direction:column;gap:8px"></div>
+            <div class="plot-container"><div id="plot-w2"></div></div>
+        </div>
+    </div></div>
+</div>
+<footer>Developed by Nicholas (Nico) Lang - University of Utah, Department of Chemistry - Alkaline Phosphatase Enzyme Kinetics</footer>
+
+<script>
+var COLORS=['#0072B2','#D55E00','#009E73','#E69F00','#CC79A7','#56B4E9','#F0E442','#000000','#882255','#44AA99'];
+var SYMBOLS=['circle','diamond','triangle-up','square','star','cross','x','diamond-open','triangle-down','hexagon'];
+
+function switchTab(n,b){
+    document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});
+    document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});
+    document.getElementById('tab-'+n).classList.add('active');
+    b.classList.add('active');
+}
+function switchSubTab(pfx,n,b){
+    var c=b.closest('.card');
+    c.querySelectorAll('.sub-panel').forEach(function(p){p.classList.remove('active')});
+    c.querySelectorAll('.sub-tab-btn').forEach(function(x){x.classList.remove('active')});
+    document.getElementById(pfx+'-sub-'+n).classList.add('active');
+    b.classList.add('active');
+}
+function setStatus(id,m,t){var e=document.getElementById(id);e.className='status-msg '+t;e.innerHTML=m}
+function clearStatus(id){var e=document.getElementById(id);e.className='status-msg';e.innerHTML=''}
+function showDebug(id,msg){var e=document.getElementById(id);if(e){e.style.display='block';e.textContent=msg}}
+function hideDebug(id){var e=document.getElementById(id);if(e){e.style.display='none';e.textContent=''}}
+function clearPanel(p){
+    if(p==='kin'){document.getElementById('kin-raw-input').value='';document.getElementById('kin-vel-input').value='';document.getElementById('kin-results').style.display='none';clearStatus('kin-status');hideDebug('kin-debug')}
+    if(p==='inh'){document.getElementById('inh-raw-input').value='';document.getElementById('inh-pct-input').value='';document.getElementById('inh-results').style.display='none';clearStatus('inh-status');hideDebug('inh-debug')}
+    if(p==='w2'){['w2-a1','w2-a2','w2-a3','w2-a4'].forEach(function(id){document.getElementById(id).value=''});document.getElementById('w2-results').style.display='none';clearStatus('w2-status');hideDebug('w2-debug')}
+}
+
+/* ===== MATH ===== */
+function linReg(x,y){
+    var n=x.length;if(n<2)return{slope:0,intercept:0,r2:0};
+    var sx=0,sy=0,sxy=0,sx2=0;
+    for(var i=0;i<n;i++){sx+=x[i];sy+=y[i];sxy+=x[i]*y[i];sx2+=x[i]*x[i]}
+    var d=n*sx2-sx*sx;if(Math.abs(d)<1e-20)return{slope:0,intercept:sy/n,r2:0};
+    var sl=(n*sxy-sx*sy)/d;
+    var ic=(sy-sl*sx)/n;
+    var ym=sy/n;var st=0;var sr=0;
+    for(var i=0;i<n;i++){st+=(y[i]-ym)*(y[i]-ym);sr+=(y[i]-(sl*x[i]+ic))*(y[i]-(sl*x[i]+ic))}
+    return{slope:sl,intercept:ic,r2:st===0?1:1-sr/st}
+}
+
+function fitMM(xA,yA){
+    var vi=[];for(var i=0;i<xA.length;i++){if(xA[i]>0&&yA[i]>0)vi.push(i)}
+    var Vm,Km;
+    if(vi.length>=2){
+        var ix=vi.map(function(i){return 1/xA[i]});var iy=vi.map(function(i){return 1/yA[i]});
+        var lb=linReg(ix,iy);Vm=1/lb.intercept;Km=lb.slope*Vm;
+        if(Vm<=0||Km<=0||!isFinite(Vm)||!isFinite(Km)){Vm=Math.max.apply(null,yA)*1.2;Km=xA[Math.floor(xA.length/2)]}
+    }else{Vm=Math.max.apply(null,yA)*1.2;Km=xA[Math.floor(xA.length/2)]||50}
+    var p=[Math.abs(Vm),Math.abs(Km)],lam=0.001;
+    for(var it=0;it<8000;it++){
+        var V=p[0],K=p[1],J00=0,J01=0,J10=0,J11=0,Jr0=0,Jr1=0,sse=0;
+        for(var i=0;i<xA.length;i++){var x=xA[i],pr=V*x/(K+x),r=yA[i]-pr;sse+=r*r;var dV=x/(K+x),dK=-V*x/((K+x)*(K+x));J00+=dV*dV;J01+=dV*dK;J10+=dK*dV;J11+=dK*dK;Jr0+=dV*r;Jr1+=dK*r}
+        var det=(J00+lam)*(J11+lam)-J01*J10;if(Math.abs(det)<1e-30)break;
+        var d0=((J11+lam)*Jr0-J01*Jr1)/det,d1=((J00+lam)*Jr1-J10*Jr0)/det;
+        var np=[p[0]+d0,p[1]+d1];
+        if(np[0]>0&&np[1]>0){var ns=0;for(var i=0;i<xA.length;i++){var pp=np[0]*xA[i]/(np[1]+xA[i]);ns+=(yA[i]-pp)*(yA[i]-pp)}if(ns<sse){p=np;lam*=0.5}else lam*=2}else lam*=2;
+        if(Math.abs(d0)<1e-14&&Math.abs(d1)<1e-14)break
+    }
+    var ym=yA.reduce(function(a,b){return a+b},0)/yA.length,st=0,sr=0;
+    for(var i=0;i<yA.length;i++){st+=(yA[i]-ym)*(yA[i]-ym);var pp=p[0]*xA[i]/(p[1]+xA[i]);sr+=(yA[i]-pp)*(yA[i]-pp)}
+    return{Vmax:p[0],Km:p[1],r2:st===0?1:1-sr/st}
+}
+
+/* =================================================================
+   COMPLETELY REWRITTEN PARSER - uses pandas-like logic
+   
+   The approach: mimic pd.read_csv(data_io, sep="\t", header=0)
+   
+   1. Split all lines by tab
+   2. Find the row with the MOST columns — that determines total columns
+   3. Row 0 = header row
+   4. Find first data row (first row where cell 0 is numeric)
+   5. Build a table where EVERY row is padded to the same width
+   6. Column 0 = time, Columns 1..N = data
+   7. Labels come from header[1..N]
+   ================================================================= */
+/* ============================================================
+   PARSER START
+   
+   To disable/modify column detection, edit this function.
+   To completely disable, replace body with:
+     throw new Error('Parser disabled');
+   
+   Key variables:
+   - headerHasTimeCol: true if header[0] is blank/"min"/"time"
+   - headerOffset: where labels start in header row  
+   - numDataCols: number of A405 data columns detected
+   - labels[]: extracted column labels
+   
+   To remove debug output, delete or comment out the lines
+   containing "debugInfo" and the showDebug() calls in
+   processKineticsRaw(), processInhRaw(), processInhIC50(),
+   and processW2().
+   
+   To remove the debug display boxes from the page, delete
+   these HTML elements:
+     <div id="kin-debug" class="debug-box"></div>
+     <div id="inh-debug" class="debug-box"></div>
+     <div id="w2-debug" class="debug-box"></div>
+   ============================================================ */
+   function parseMultiColTable(text){
+    var lines = text.trim().split('\n');
+    if(lines.length < 3) throw new Error('Need at least 3 rows');
+    
+    /* Split all lines by tab */
+    var allRows = [];
+    var maxWidth = 0;
+    for(var i = 0; i < lines.length; i++){
+        var cells = lines[i].split('\t');
+        allRows.push(cells);
+        if(cells.length > maxWidth) maxWidth = cells.length;
+    }
+    
+    /* Pad all rows to maxWidth */
+    for(var i = 0; i < allRows.length; i++){
+        while(allRows[i].length < maxWidth) allRows[i].push('');
+    }
+    
+    var headerRow = allRows[0];
+    
+    /* Find data start row */
+    var dataStartRow = -1;
+    for(var r = 1; r < allRows.length; r++){
+        var cell0 = allRows[r][0].trim();
+        var low = cell0.toLowerCase();
+        if(low.indexOf('veloc') >= 0 || low.indexOf('initial') >= 0 || low.indexOf('slope') >= 0) continue;
+        if(cell0 !== '' && !isNaN(parseFloat(cell0))){
+            dataStartRow = r;
+            break;
+        }
+    }
+    if(dataStartRow < 0) throw new Error('No numeric time data found');
+    
+    /* Determine: does header row have a leading blank cell for the time column?
+       Compare header length vs data row structure.
+       
+       Key logic: In the data rows, cell[0] is always the time value.
+       In the header row, if cell[0] is blank/empty/"min"/"time", then
+       header and data use the SAME column indices (both start data at col 1).
+       
+       If header cell[0] is NOT blank and the header has FEWER cells than
+       data rows, then header labels start at cell[0] and map to data col 1.
+    */
+    
+    var h0 = headerRow[0].trim();
+    var h0low = h0.toLowerCase();
+    var headerHasTimeCol = (h0 === '' || h0low === 'min' || h0low === 'time' || h0low === 'minutes' || h0low === 'sec' || h0low === 'seconds');
+    
+    var numDataCols;
+    var labels = [];
+    if(headerHasTimeCol){
+        numDataCols = maxWidth - 1;
+        for(var c = 0; c < numDataCols; c++){
+            var lbl = headerRow[c + 1] ? headerRow[c + 1].trim() : '';
+            labels.push(lbl || ('Col ' + (c + 1)));
+        }
+    } else {
+        numDataCols = maxWidth - 1;
+        for(var c = 0; c < numDataCols; c++){
+            var lbl = (c < headerRow.length) ? headerRow[c].trim() : '';
+            labels.push(lbl || ('Col ' + (c + 1)));
+        }
+    }
+    if(numDataCols < 1) throw new Error('Need at least 1 data column');
+    
+    /* Parse time and absorbance — data ALWAYS at indices 1..numDataCols */
+    var time = [];
+    var absD = [];
+    for(var c = 0; c < numDataCols; c++) absD.push([]);
+    
+    for(var r = dataStartRow; r < allRows.length; r++){
+        var row = allRows[r];
+        var cell0 = row[0].trim();
+        var low = cell0.toLowerCase();
+        if(low.indexOf('veloc') >= 0 || low.indexOf('initial') >= 0 || low.indexOf('slope') >= 0) continue;
+        var t = parseFloat(cell0);
+        if(isNaN(t)) continue;
+        time.push(t);
+        for(var c = 0; c < numDataCols; c++){
+            var val = parseFloat(row[c + 1]);
+            absD[c].push(isNaN(val) ? null : val);
+        }
+    }
+    
+    if(time.length < 3) throw new Error('Not enough time points (found ' + time.length + ')');
+    
+    var columns = [];
+    for(var c = 0; c < numDataCols; c++){
+        columns.push({label: labels[c], absorbance: absD[c]});
+    }
+    
+    var debugInfo = 'Parser: maxWidth=' + maxWidth + ', headerHasTimeCol=' + headerHasTimeCol + 
+        ', numDataCols=' + numDataCols + ', timePoints=' + time.length +
+        '\nHeader[0]="' + h0 + '", Labels: [' + labels.join(', ') + ']' +
+        '\nFirst data row cells: [' + allRows[dataStartRow].map(function(c){return '"'+c.trim()+'"'}).join(', ') + ']';
+    
+    return {time: time, columns: columns, debug: debugInfo};
+}
+/* ============================================================
+   PARSER END
+   ============================================================ */
+/* Group columns by text label */
+function groupByLabel(parsed, avgReps){
+    if(!avgReps) return parsed;
+    var time = parsed.time, cols = parsed.columns;
+    var groups = {}, order = [];
+    for(var c = 0; c < cols.length; c++){
+        var key = cols[c].label;
+        if(!groups[key]){groups[key] = []; order.push(key)}
+        groups[key].push(cols[c].absorbance);
+    }
+    var newCols = [];
+    for(var k = 0; k < order.length; k++){
+        var key = order[k], arrs = groups[key];
+        var avg = time.map(function(t, i){
+            var vs = arrs.map(function(a){return a[i]}).filter(function(v){return v !== null});
+            return vs.length ? vs.reduce(function(a, b){return a + b}, 0) / vs.length : null;
+        });
+        newCols.push({label: key, absorbance: avg, reps: arrs.length});
+    }
+    return {time: time, columns: newCols, debug: parsed.debug};
+}
+
+/* Group columns by numeric concentration */
+function groupByConc(parsed, avgReps){
+    var time = parsed.time, cols = parsed.columns;
+    if(!avgReps){
+        var out = [];
+        for(var c = 0; c < cols.length; c++){
+            var cn = parseFloat(cols[c].label);
+            if(isNaN(cn)) continue;
+            out.push({conc: cn, label: String(cn), absorbance: cols[c].absorbance, reps: 1});
+        }
+        return {time: time, columns: out, debug: parsed.debug};
+    }
+    var groups = {}, order = [];
+    for(var c = 0; c < cols.length; c++){
+        var cn = parseFloat(cols[c].label);
+        if(isNaN(cn)) continue;
+        var key = String(cn);
+        if(!groups[key]){groups[key] = []; order.push(cn)}
+        groups[key].push(cols[c].absorbance);
+    }
+    order.sort(function(a, b){return a - b});
+    var newCols = [];
+    for(var k = 0; k < order.length; k++){
+        var key = String(order[k]), arrs = groups[key];
+        var avg = time.map(function(t, i){
+            var vs = arrs.map(function(a){return a[i]}).filter(function(v){return v !== null});
+            return vs.length ? vs.reduce(function(a, b){return a + b}, 0) / vs.length : null;
+        });
+        newCols.push({conc: order[k], label: String(order[k]), absorbance: avg, reps: arrs.length});
+    }
+    return {time: time, columns: newCols, debug: parsed.debug};
+}
+
+function parse2Col(text){
+    var lines = text.trim().split('\n'), x = [], y = [], headerFound = false;
+    for(var i = 0; i < lines.length; i++){
+        var p = lines[i].split('\t').map(function(s){return s.trim()});
+        if(p.length < 2) continue;
+        var xi = parseFloat(p[0]), yi = parseFloat(p[1]);
+        if(isNaN(xi) || isNaN(yi)){headerFound = true; continue}
+        if(!headerFound && i === 0){headerFound = true; continue}
+        x.push(xi); y.push(yi);
+    }
+    if(x.length < 3) throw new Error('Need at least 3 numeric data points.');
+    return {x: x, y: y};
+}
+
+function getRange(pfx){
+    var mn = document.getElementById(pfx + '-time-min'), mx = document.getElementById(pfx + '-time-max');
+    return {tMin: mn && mn.value !== '' ? parseFloat(mn.value) : null, tMax: mx && mx.value !== '' ? parseFloat(mx.value) : null};
+}
+function filterT(time, abs, tMin, tMax){
+    var tA = [], aA = [];
+    for(var i = 0; i < time.length; i++){if(abs[i] === null) continue; if(tMin !== null && time[i] < tMin) continue; if(tMax !== null && time[i] > tMax) continue; tA.push(time[i]); aA.push(abs[i])}
+    return {t: tA, a: aA};
+}
+
+function baseLayout(title, xlab, ylab, extra){
+    var L = {title: {text: title, font: {size: 16, family: 'Segoe UI,Arial', color: '#1a1a2e'}},
+        xaxis: {title: {text: xlab, font: {size: 13}}, zeroline: true, gridcolor: '#e8ecf7'},
+        yaxis: {title: {text: ylab, font: {size: 13}}, zeroline: true, gridcolor: '#e8ecf7'},
+        plot_bgcolor: '#fff', paper_bgcolor: '#fff', font: {family: 'Segoe UI,Arial', size: 11},
+        legend: {x: 1.02, y: 1, font: {size: 8}, tracegroupgap: 2, itemwidth: 30},
+        margin: {l: 70, r: 100, t: 50, b: 60}};
+    if(extra){
+        for(var k in extra){
+            if(extra.hasOwnProperty(k) && typeof extra[k] === 'object' && extra[k] !== null && typeof L[k] === 'object' && L[k] !== null){
+                for(var kk in extra[k]){
+                    if(extra[k].hasOwnProperty(kk)) L[k][kk] = extra[k][kk];
+                }
+            } else {
+                L[k] = extra[k];
+            }
+        }
+    }
+    return L;
+}
+
+function plotRawWithFits(divId, title, xlab, ylab, time, columns, range){
+    var traces = [], maxT = Math.max.apply(null, time), results = [];
+    for(var ci = 0; ci < columns.length; ci++){
+        var col = columns[ci], lbl = col.label || ('Col ' + (ci + 1));
+        var f = filterT(time, col.absorbance, range.tMin, range.tMax);
+        if(f.t.length < 2){results.push({label: lbl, conc: col.conc, slope: 0, intercept: 0, r2: 0, reps: col.reps || 1}); continue}
+        var reg = linReg(f.t, f.a);
+        results.push({label: lbl, conc: col.conc, slope: reg.slope, intercept: reg.intercept, r2: reg.r2, reps: col.reps || 1});
+        var color = COLORS[ci % COLORS.length], sym = SYMBOLS[ci % SYMBOLS.length];
+        var dx = [], dy = [];
+        for(var i = 0; i < time.length; i++){if(col.absorbance[i] !== null){dx.push(time[i]); dy.push(col.absorbance[i])}}
+        traces.push({x: dx, y: dy, mode: 'markers', type: 'scatter',
+            name: lbl + '<br>Y = ' + reg.slope.toExponential(4) + '*X ' + (reg.intercept >= 0 ? '+ ' : '- ') + Math.abs(reg.intercept).toFixed(4) + '<br>R\u00B2: ' + reg.r2.toFixed(4),
+            marker: {color: color, symbol: sym, size: 7}});
+        traces.push({x: [0, maxT], y: [reg.intercept, reg.slope * maxT + reg.intercept], mode: 'lines', type: 'scatter',
+            line: {color: color, width: 1.5, dash: 'dash'}, showlegend: false});
+    }
+    Plotly.newPlot(divId, traces, baseLayout(title, xlab, ylab), {responsive: true, toImageButtonOptions: {format: 'png', width: 888, height: 480, scale: 10}});
+    return results;
+}
+
+function rawTableToSlopes(text, avgReps, range){
+    var parsed = parseMultiColTable(text);
+    var grouped = groupByConc(parsed, avgReps);
+    var time = grouped.time, cols = grouped.columns, vels = [];
+    for(var ci = 0; ci < cols.length; ci++){
+        var col = cols[ci]; col.label = col.conc + ' \u00B5M';
+        var f = filterT(time, col.absorbance, range.tMin, range.tMax);
+        if(f.t.length < 2){vels.push({conc: col.conc, slope: 0, intercept: 0, r2: 0, reps: col.reps || 1}); continue}
+        var reg = linReg(f.t, f.a);
+        vels.push({conc: col.conc, slope: reg.slope, intercept: reg.intercept, r2: reg.r2, reps: col.reps || 1});
+    }
+    return {time: time, columns: cols, vels: vels, debug: grouped.debug};
+}
+
+/* ===== MM-KINETICS: RAW ===== */
+function processKineticsRaw(){
+    var text = document.getElementById('kin-raw-input').value.trim();
+    if(!text){setStatus('kin-status', 'Please paste data first.', 'error'); return}
+    clearStatus('kin-status'); hideDebug('kin-debug');
+    try {
+        var avgReps = document.getElementById('kin-avg-reps').checked;
+        var range = getRange('kin');
+        var r = rawTableToSlopes(text, avgReps, range);
+        showDebug('kin-debug', r.debug);
+        var time = r.time, cols = r.columns, vels = r.vels;
+        var rawTitle = document.getElementById('kin-raw-title').value, rawXL = document.getElementById('kin-raw-x-label').value, rawYL = document.getElementById('kin-raw-y-label').value;
+        var velU = document.getElementById('kin-vel-units').value, subU = document.getElementById('kin-sub-units').value;
+        plotRawWithFits('plot-kin-raw', rawTitle, rawXL, rawYL, time, cols, range);
+        var rn = ''; if(range.tMin !== null || range.tMax !== null) rn = ' (time: ' + (range.tMin !== null ? range.tMin : 'start') + '\u2013' + (range.tMax !== null ? range.tMax : 'end') + ' min)';
+        var th = '<div class="section-label">Calculated Initial Velocities' + rn + '</div><table class="vel-table"><thead><tr><th>[Substrate] (' + subU + ')</th><th>Slope (' + velU + ')</th><th>Intercept</th><th>R\u00B2</th><th>Reps</th></tr></thead><tbody>';
+        for(var i = 0; i < vels.length; i++) th += '<tr><td>' + vels[i].conc + '</td><td>' + vels[i].slope.toExponential(4) + '</td><td>' + vels[i].intercept.toFixed(5) + '</td><td>' + vels[i].r2.toFixed(4) + '</td><td>' + (vels[i].reps || 1) + '</td></tr>';
+        th += '</tbody></table>'; document.getElementById('kin-vel-table').innerHTML = th;
+        var mmX = [], mmY = [];
+        for(var i = 0; i < vels.length; i++){mmX.push(vels[i].conc); mmY.push(vels[i].slope)}
+        if(mmX.length < 3){setStatus('kin-status', 'Not enough positive velocity points for MM fit.', 'error'); return}
+        var fit = fitMM(mmX, mmY);
+        var plotTitle = document.getElementById('kin-plot-title').value, xLabel = document.getElementById('kin-x-label').value, yLabel = document.getElementById('kin-y-label').value;
+        document.getElementById('kin-equation').innerHTML = 'Y = ' + fit.Vmax.toFixed(5) + ' \u00D7 X / (X + ' + fit.Km.toFixed(2) + ')';
+        document.getElementById('kin-params').innerHTML = '<div class="param-card"><div class="param-label">V<sub>max</sub></div><div class="param-value">' + fit.Vmax.toFixed(5) + '</div><div class="param-unit">' + velU + '</div></div><div class="param-card"><div class="param-label">K<sub>m</sub></div><div class="param-value">' + fit.Km.toFixed(2) + '</div><div class="param-unit">' + subU + '</div></div><div class="param-card"><div class="param-label">R\u00B2</div><div class="param-value">' + fit.r2.toFixed(4) + '</div></div><div class="param-card"><div class="param-label">Data Points</div><div class="param-value">' + mmX.length + '</div></div>';
+        var xMax = Math.max.apply(null, mmX) * 1.15, cx = [], cy = [];
+        for(var i = 0; i <= 300; i++){var xi = xMax * i / 300; cx.push(xi); cy.push(fit.Vmax * xi / (fit.Km + xi))}
+        Plotly.newPlot('plot-kin-mm', [{x: mmX, y: mmY, mode: 'markers', type: 'scatter', name: 'Experimental Data<br>Y = ' + fit.Vmax.toFixed(5) + ' * X / (X + ' + fit.Km.toFixed(2) + ')<br>R\u00B2: ' + fit.r2.toFixed(4), marker: {color: '#0072B2', size: 9}}, {x: cx, y: cy, mode: 'lines', type: 'scatter', line: {color: '#0072B2', width: 2, dash: 'dash'}, showlegend: false}], baseLayout(plotTitle, xLabel, yLabel, {yaxis: {rangemode: 'tozero'}, xaxis: {rangemode: 'tozero'}}), {responsive: true, toImageButtonOptions: {format: 'png', width: 888, height: 480, scale: 10}});
+        document.getElementById('kin-results').style.display = 'block'; document.getElementById('kin-raw-section').style.display = 'block';
+        setStatus('kin-status', 'Processed ' + cols.length + ' concentrations. MM curve fitted.', 'success');
+    } catch(e){setStatus('kin-status', 'Error: ' + e.message, 'error')}
+}
+
+/* ===== MM-KINETICS: VELOCITY ===== */
+function processKineticsVel(){
+    var text = document.getElementById('kin-vel-input').value.trim();
+    if(!text){setStatus('kin-status', 'Please paste data first.', 'error'); return}
+    clearStatus('kin-status');
+    try {
+        var data = parse2Col(text);
+        var pX = [], pY = []; for(var i = 0; i < data.x.length; i++){if(data.x[i] > 0 && data.y[i] > 0){pX.push(data.x[i]); pY.push(data.y[i])}}
+        var fit = fitMM(pX, pY);
+        var velU = document.getElementById('kin-vel-units').value, subU = document.getElementById('kin-sub-units').value;
+        var plotTitle = document.getElementById('kin-plot-title').value, xLabel = document.getElementById('kin-x-label').value, yLabel = document.getElementById('kin-y-label').value;
+        document.getElementById('kin-equation').innerHTML = 'Y = ' + fit.Vmax.toFixed(5) + ' \u00D7 X / (X + ' + fit.Km.toFixed(2) + ')';
+        document.getElementById('kin-params').innerHTML = '<div class="param-card"><div class="param-label">V<sub>max</sub></div><div class="param-value">' + fit.Vmax.toFixed(5) + '</div><div class="param-unit">' + velU + '</div></div><div class="param-card"><div class="param-label">K<sub>m</sub></div><div class="param-value">' + fit.Km.toFixed(2) + '</div><div class="param-unit">' + subU + '</div></div><div class="param-card"><div class="param-label">R\u00B2</div><div class="param-value">' + fit.r2.toFixed(4) + '</div></div>';
+        var xMax = Math.max.apply(null, data.x) * 1.15, cx = [], cy = [];
+        for(var i = 0; i <= 300; i++){var xi = xMax * i / 300; cx.push(xi); cy.push(fit.Vmax * xi / (fit.Km + xi))}
+        Plotly.newPlot('plot-kin-mm', [{x: data.x, y: data.y, mode: 'markers', type: 'scatter', name: 'Experimental Data<br>Y = ' + fit.Vmax.toFixed(5) + ' * X / (X + ' + fit.Km.toFixed(2) + ')<br>R\u00B2: ' + fit.r2.toFixed(4), marker: {color: '#0072B2', size: 9}}, {x: cx, y: cy, mode: 'lines', type: 'scatter', line: {color: '#0072B2', width: 2, dash: 'dash'}, showlegend: false}], baseLayout(plotTitle, xLabel, yLabel, {yaxis: {rangemode: 'tozero'}, xaxis: {rangemode: 'tozero'}}), {responsive: true, toImageButtonOptions: {format: 'png', width: 888, height: 480, scale: 10}});
+        document.getElementById('kin-results').style.display = 'block'; document.getElementById('kin-raw-section').style.display = 'none';
+        setStatus('kin-status', 'MM curve fitted.', 'success');
+    } catch(e){setStatus('kin-status', 'Error: ' + e.message, 'error')}
+}
+
+/* ===== MM-INHIBITION: RAW ===== */
+function processInhRaw(){
+    var text = document.getElementById('inh-raw-input').value.trim();
+    if(!text){setStatus('inh-status', 'Please paste data first.', 'error'); return}
+    clearStatus('inh-status'); hideDebug('inh-debug');
+    try {
+        var parsed = parseMultiColTable(text);
+        showDebug('inh-debug', parsed.debug);
+        var avgReps = document.getElementById('inh-avg-reps').checked;
+        var grouped = avgReps ? groupByLabel(parsed, true) : {time: parsed.time, columns: parsed.columns.map(function(c){return {label: c.label, absorbance: c.absorbance, reps: 1}}), debug: parsed.debug};
+        var time = grouped.time, cols = grouped.columns, range = getRange('inh');
+        var rawTitle = document.getElementById('inh-raw-title').value, rawXL = document.getElementById('inh-raw-x-label').value, rawYL = document.getElementById('inh-raw-y-label').value;
+        var vels = plotRawWithFits('plot-inh-raw', rawTitle, rawXL, rawYL, time, cols, range);
+        var th = '<div class="section-label">Initial Velocities</div><table class="vel-table"><thead><tr><th>Condition</th><th>Slope (\u0394A405/min)</th><th>Intercept</th><th>R\u00B2</th>' + (avgReps ? '<th>Reps</th>' : '') + '</tr></thead><tbody>';
+        for(var i = 0; i < vels.length; i++) th += '<tr><td>' + vels[i].label + '</td><td>' + vels[i].slope.toExponential(4) + '</td><td>' + vels[i].intercept.toFixed(5) + '</td><td>' + vels[i].r2.toFixed(4) + '</td>' + (avgReps ? '<td>' + (cols[i].reps || 1) + '</td>' : '') + '</tr>';
+        th += '</tbody></table>'; document.getElementById('inh-vel-table').innerHTML = th;
+        document.getElementById('inh-results').style.display = 'block'; document.getElementById('inh-raw-section').style.display = 'block'; document.getElementById('inh-ic50-section').style.display = 'none';
+        setStatus('inh-status', 'Processed ' + cols.length + ' conditions.', 'success');
+    } catch(e){setStatus('inh-status', 'Error: ' + e.message, 'error')}
+}
+/* ===== MM-INHIBITION: IC50 ===== */
+function processInhIC50(){
+    var text = document.getElementById('inh-pct-input').value.trim();
+    if(!text){setStatus('inh-status', 'Please paste data first.', 'error'); return}
+    clearStatus('inh-status'); hideDebug('inh-debug');
+    try {
+        var avgReps = document.getElementById('ic50-avg-reps').checked;
+        var range = getRange('inh');
+        var r = rawTableToSlopes(text, avgReps, range);
+        showDebug('inh-debug', r.debug);
+        var time = r.time, cols = r.columns, vels = r.vels;
+        var rawTitle = document.getElementById('inh-raw-title').value, rawXL = document.getElementById('inh-raw-x-label').value, rawYL = document.getElementById('inh-raw-y-label').value;
+        plotRawWithFits('plot-inh-ic50-raw', rawTitle, rawXL, rawYL, time, cols, range);
+        var th = '<div class="section-label">Calculated Initial Velocities</div><table class="vel-table"><thead><tr><th>[Inhibitor] (\u00B5M)</th><th>Slope (\u0394A405/min)</th><th>Intercept</th><th>R\u00B2</th><th>Reps</th></tr></thead><tbody>';
+        for(var i = 0; i < vels.length; i++) th += '<tr><td>' + vels[i].conc + '</td><td>' + vels[i].slope.toExponential(4) + '</td><td>' + vels[i].intercept.toFixed(5) + '</td><td>' + vels[i].r2.toFixed(4) + '</td><td>' + (vels[i].reps || 1) + '</td></tr>';
+        th += '</tbody></table>'; document.getElementById('inh-ic50-vel-table').innerHTML = th;
+        var maxSlope = -Infinity;
+        for(var i = 0; i < vels.length; i++){if(vels[i].slope > maxSlope) maxSlope = vels[i].slope}
+        if(maxSlope <= 0){setStatus('inh-status', 'All slopes are zero or negative.', 'error'); return}
+        var inhConc = [], pctInh = [];
+        for(var i = 0; i < vels.length; i++){var pct = (1 - vels[i].slope / maxSlope) * 100; if(pct < 0) pct = 0; inhConc.push(vels[i].conc); pctInh.push(pct)}
+        var fX = [], fY = [];
+        for(var i = 0; i < inhConc.length; i++){fX.push(inhConc[i]); fY.push(pctInh[i])}
+        if(fX.length < 2){setStatus('inh-status', 'Not enough positive inhibition data for IC50 fit.', 'error'); return}
+        var fit = fitMM(fX, fY);
+        var Imax = fit.Vmax, IC50 = fit.Km, r2 = fit.r2;
+        document.getElementById('inh-ic50-equation').innerHTML = '% Inhibition = ' + Imax.toFixed(2) + ' \u00D7 [I] / (' + IC50.toFixed(2) + ' + [I])';
+        document.getElementById('inh-ic50-params').innerHTML = '<div class="param-card"><div class="param-label">I<sub>max</sub></div><div class="param-value">' + Imax.toFixed(2) + '</div><div class="param-unit">%</div></div><div class="param-card"><div class="param-label">IC<sub>50</sub></div><div class="param-value">' + IC50.toFixed(2) + '</div><div class="param-unit">\u00B5M</div></div><div class="param-card"><div class="param-label">R\u00B2</div><div class="param-value">' + r2.toFixed(4) + '</div></div><div class="param-card"><div class="param-label">Data Points</div><div class="param-value">' + fX.length + '</div></div>';
+        var xMax = Math.max.apply(null, inhConc) * 1.2, cx = [], cy = [];
+        for(var i = 0; i <= 300; i++){var xi = xMax * i / 300; cx.push(xi); cy.push(Imax * xi / (IC50 + xi))}
+        var ic50Title = document.getElementById('inh-ic50-title') ? document.getElementById('inh-ic50-title').value : 'Alkaline Phosphatase Inhibition \u2014 IC50';
+        var ic50XL = document.getElementById('inh-ic50-x-label') ? document.getElementById('inh-ic50-x-label').value : '[Inhibitor] (\u00B5M)';
+        var ic50YL = document.getElementById('inh-ic50-y-label') ? document.getElementById('inh-ic50-y-label').value : '% Inhibition';
+        Plotly.newPlot('plot-inh-ic50', [{x: fX, y: fY, mode: 'markers', type: 'scatter', name: 'Experimental Data<br>% Inh = ' + Imax.toFixed(2) + ' * [I] / (' + IC50.toFixed(2) + ' + [I])<br>IC50 = ' + IC50.toFixed(2) + ' \u00B5M<br>R\u00B2: ' + r2.toFixed(4), marker: {color: '#0072B2', size: 9}}, {x: cx, y: cy, mode: 'lines', type: 'scatter', line: {color: '#0072B2', width: 2, dash: 'dash'}, showlegend: false}], baseLayout(ic50Title, ic50XL, ic50YL, {yaxis: {rangemode: 'tozero'}, xaxis: {rangemode: 'tozero'}}), {responsive: true, toImageButtonOptions: {format: 'png', width: 888, height: 480, scale: 10}});
+        document.getElementById('inh-results').style.display = 'block'; document.getElementById('inh-raw-section').style.display = 'none'; document.getElementById('inh-ic50-section').style.display = 'block';
+        setStatus('inh-status', 'IC50 fitted. IC50 = ' + IC50.toFixed(2) + ' \u00B5M, Imax = ' + Imax.toFixed(2) + '%', 'success');
+    } catch(e){setStatus('inh-status', 'Error: ' + e.message, 'error')}
+}
+/* ===== WEEK 2 ===== */
+function processW2(){
+    var ids = ['w2-a1', 'w2-a2', 'w2-a3', 'w2-a4'];
+    var labels = ['\u03B11 (Control)', '\u03B12', '\u03B13', '\u03B14'];
+    var mmTraces = [], rawTraces = [], paramCards = [], errors = [], allVelRows = [], debugMsgs = [];
+    var plotTitle = document.getElementById('w2-plot-title').value;
+    var xLabel = document.getElementById('w2-x-label').value;
+    var yLabel = document.getElementById('w2-y-label').value;
+    var rawTitle = document.getElementById('w2-raw-title').value;
+    var avgReps = document.getElementById('w2-avg-reps').checked, range = getRange('w2');
+    for(var idx = 0; idx < 4; idx++){
+        var text = document.getElementById(ids[idx]).value.trim(); if(!text) continue;
+        try {
+            var r = rawTableToSlopes(text, avgReps, range);
+            debugMsgs.push(labels[idx] + ': ' + r.debug);
+            var time = r.time, cols = r.columns, vels = r.vels;
+            var color = COLORS[idx % COLORS.length], sym = SYMBOLS[idx % SYMBOLS.length];
+            var maxT = Math.max.apply(null, time);
+            for(var ci = 0; ci < cols.length; ci++){
+                var col = cols[ci], dx = [], dy = [];
+                for(var i = 0; i < time.length; i++){if(col.absorbance[i] !== null){dx.push(time[i]); dy.push(col.absorbance[i])}}
+                var f = filterT(time, col.absorbance, range.tMin, range.tMax);
+                var reg = (f.t.length >= 2) ? linReg(f.t, f.a) : {slope: 0, intercept: 0, r2: 0};
+                rawTraces.push({x: dx, y: dy, mode: 'markers', type: 'scatter', name: labels[idx] + ' ' + col.conc + ' \u00B5M', marker: {color: color, symbol: sym, size: 5}, legendgroup: labels[idx]});
+                if(f.t.length >= 2) rawTraces.push({x: [0, maxT], y: [reg.intercept, reg.slope * maxT + reg.intercept], mode: 'lines', type: 'scatter', line: {color: color, width: 1, dash: 'dash'}, showlegend: false, legendgroup: labels[idx]});
+            }
+            for(var i = 0; i < vels.length; i++) allVelRows.push({alpha: labels[idx], conc: vels[i].conc, slope: vels[i].slope, intercept: vels[i].intercept, r2: vels[i].r2, reps: vels[i].reps});
+            var mmX = [], mmY = [];
+            for(var i = 0; i < vels.length; i++){mmX.push(vels[i].conc); mmY.push(vels[i].slope)}
+            if(mmX.length < 3){errors.push(labels[idx] + ': need 3+ positive slopes'); continue}
+            var fit = fitMM(mmX, mmY);
+            var xMax = Math.max.apply(null, mmX) * 1.1, cx = [], cy = [];
+            for(var i = 0; i <= 300; i++){var xi = xMax * i / 300; cx.push(xi); cy.push(fit.Vmax * xi / (fit.Km + xi))}
+            mmTraces.push({x: mmX, y: mmY, mode: 'markers', type: 'scatter', name: labels[idx] + '<br>Vmax=' + fit.Vmax.toFixed(5) + ', Km=' + fit.Km.toFixed(2) + '<br>R\u00B2=' + fit.r2.toFixed(4), marker: {color: color, symbol: sym, size: 8}});
+            mmTraces.push({x: cx, y: cy, mode: 'lines', type: 'scatter', line: {color: color, width: 2, dash: 'dash'}, showlegend: false});
+            paramCards.push('<div style="background:#f0f4ff;border:1.5px solid #d0d7e8;border-left:4px solid ' + color + ';border-radius:8px;padding:10px 18px;display:flex;gap:18px;flex-wrap:wrap;align-items:center"><span style="font-weight:700;color:' + color + ';min-width:100px">' + labels[idx] + '</span><span><b>V<sub>max</sub>:</b> ' + fit.Vmax.toFixed(5) + '</span><span><b>K<sub>m</sub>:</b> ' + fit.Km.toFixed(2) + '</span><span><b>R\u00B2:</b> ' + fit.r2.toFixed(4) + '</span></div>');
+        } catch(e){errors.push(labels[idx] + ': ' + e.message)}
+    }
+    if(debugMsgs.length > 0) showDebug('w2-debug', debugMsgs.join('\n\n'));
+    if(mmTraces.length === 0 && rawTraces.length === 0){setStatus('w2-status', 'No valid data. ' + errors.join(' | '), 'error'); return}
+        if(rawTraces.length > 0){
+        var w2RawXL = document.getElementById('w2-raw-x-label') ? document.getElementById('w2-raw-x-label').value : 'Time (min)';
+        var w2RawYL = document.getElementById('w2-raw-y-label') ? document.getElementById('w2-raw-y-label').value : 'A405';
+        Plotly.newPlot('plot-w2-raw', rawTraces, baseLayout(rawTitle, w2RawXL, w2RawYL), {responsive: true, toImageButtonOptions: {format: 'png', width: 888, height: 480, scale: 10}});
+    }
+    if(allVelRows.length > 0){
+        var th = '<div class="section-label">Calculated Initial Velocities</div><table class="vel-table"><thead><tr><th>Condition</th><th>[Substrate] (\u00B5M)</th><th>Slope (\u0394A405/min)</th><th>Intercept</th><th>R\u00B2</th><th>Reps</th></tr></thead><tbody>';
+        for(var i = 0; i < allVelRows.length; i++){var v = allVelRows[i]; th += '<tr><td>' + v.alpha + '</td><td>' + v.conc + '</td><td>' + v.slope.toExponential(4) + '</td><td>' + v.intercept.toFixed(5) + '</td><td>' + v.r2.toFixed(4) + '</td><td>' + (v.reps || 1) + '</td></tr>'}
+        th += '</tbody></table>'; document.getElementById('w2-vel-table').innerHTML = th;
+    }
+    if(mmTraces.length > 0){
+        document.getElementById('w2-params-all').innerHTML = paramCards.join('');
+        Plotly.newPlot('plot-w2', mmTraces, baseLayout(plotTitle, xLabel, yLabel, {yaxis: {rangemode: 'tozero'}, xaxis: {rangemode: 'tozero'}}), {responsive: true, toImageButtonOptions: {format: 'png', width: 888, height: 480, scale: 10}});
+    }
+    document.getElementById('w2-results').style.display = 'block';
+    setStatus('w2-status', errors.length ? 'Plotted ' + (mmTraces.length / 2) + ' datasets. ' + errors.join(' | ') : 'All datasets fitted.', errors.length ? 'info' : 'success');
+}
+
+/* ===== EXAMPLES ===== */
+function loadKinExample(){
+    document.getElementById('kin-raw-input').value = '\t0\t10\t15\t25\t50\t75\t150\t175\t200\t400\n\tCell 1\tCell 1\tCell 2\tCell 2\tCell 3\tCell 3\tCell 4\tCell 4\tCell 5\tCell 5\nmin\tA\tA\tA\tA\tA\tA\tA\tA\tA\tA\n0\t0.0754\t0.05085\t0.05925\t0.0718\t0.0727\t0.0599\t0.0706\t0.05705\t0.0558\t0.0644\n0.5\t0.0752\t0.064\t0.0746\t0.0936\t0.0939\t0.0832\t0.0955\t0.0804\t0.08115\t0.091\n1\t0.07485\t0.0761\t0.08875\t0.1135\t0.1156\t0.10595\t0.1188\t0.10405\t0.1059\t0.11795\n1.5\t0.07495\t0.08655\t0.1022\t0.132\t0.13655\t0.1279\t0.14295\t0.1265\t0.1303\t0.14395\n2\t0.0748\t0.09585\t0.11435\t0.1501\t0.15705\t0.1522\t0.16545\t0.14865\t0.1542\t0.1701\n2.5\t0.0748\t0.10405\t0.12565\t0.1671\t0.17725\t0.1726\t0.1882\t0.17055\t0.17835\t0.19595\n3\t0.0749\t0.1113\t0.13595\t0.1835\t0.19635\t0.19465\t0.21075\t0.1917\t0.2024\t0.22175\n3.5\t0.0747\t0.1177\t0.1451\t0.19885\t0.21515\t0.2166\t0.23265\t0.21265\t0.22575\t0.2465\n4\t0.0743\t0.1231\t0.15385\t0.21335\t0.23275\t0.23745\t0.25475\t0.23425\t0.249\t0.27125\n4.5\t0.07455\t0.12765\t0.1621\t0.22695\t0.25\t0.2575\t0.2761\t0.25605\t0.27115\t0.296\n5\t0.07455\t0.1317\t0.16995\t0.23995\t0.26675\t0.27745\t0.299\t0.2783\t0.29365\t0.3206\n5.5\t0.07465\t0.13495\t0.17715\t0.2529\t0.28295\t0.29675\t0.3209\t0.3007\t0.316\t0.34395\n6\t0.07455\t0.13795\t0.1836\t0.2617\t0.2992\t0.3154\t0.3441\t0.32125\t0.3379\t0.3673\n6.5\t0.0746\t0.14045\t0.1894\t0.2721\t0.3151\t0.3337\t0.3644\t0.3422\t0.35935\t0.39225\n7\t0.07445\t0.1426\t0.1943\t0.28085\t0.32915\t0.35175\t0.3855\t0.36215\t0.3818\t0.41745\n7.5\t0.0744\t0.1445\t0.1989\t0.29065\t0.34285\t0.3702\t0.405\t0.3817\t0.40315\t0.44225\n8\t0.0746\t0.146\t0.20335\t0.29725\t0.35705\t0.3886\t0.42385\t0.39955\t0.42535\t0.4662\n8.5\t0.0746\t0.14725\t0.2069\t0.3045\t0.3712\t0.4063\t0.4422\t0.4187\t0.44565\t0.48945\n9\t0.07445\t0.1484\t0.21045\t0.31125\t0.38475\t0.42355\t0.46095\t0.43695\t0.46575\t0.5129';
+    var c = document.getElementById('tab-mm-kinetics').querySelector('.card');
+    c.querySelectorAll('.sub-tab-btn').forEach(function(b, i){b.classList.toggle('active', i === 0)});
+    document.getElementById('kin-sub-raw').classList.add('active'); document.getElementById('kin-sub-velocity').classList.remove('active');
+    setStatus('kin-status', 'Example loaded. Click Plot & Fit.', 'info');
+}
+
+function loadInhExample(){
+    document.getElementById('inh-raw-input').value = '\tCitrate\tHistidine\tImidazole\tPhenylalanine\tPhosphate\n\tCell 1\tCell 2\tCell 3\tCell 4\tCell 5\nmin\tA\tA\tA\tA\tA\n0\t-0.0017\t0.02125\t0.01975\t0.0153\t0.0102\n0.5\t-0.0016\t0.02855\t0.026\t0.01965\t0.01025\n1\t-0.00185\t0.0364\t0.03265\t0.024\t0.01045\n1.5\t-0.0018\t0.04455\t0.0395\t0.02865\t0.0103\n2\t-0.0018\t0.0526\t0.04625\t0.0345\t0.01055\n2.5\t-0.0018\t0.06065\t0.0528\t0.03755\t0.0107\n3\t-0.0017\t0.0688\t0.0597\t0.0421\t0.01065\n3.5\t-0.0017\t0.07705\t0.0667\t0.04645\t0.0109\n4\t-0.00185\t0.0853\t0.0728\t0.051\t0.0111\n4.5\t-0.00175\t0.0934\t0.0797\t0.05555\t0.0115\n5\t-0.0017\t0.10105\t0.0864\t0.06015\t0.0116\n5.5\t-0.0017\t0.10885\t0.0929\t0.0645\t0.0117\n6\t-0.0018\t0.1163\t0.09925\t0.0688\t0.0117\n6.5\t-0.00195\t0.12355\t0.10565\t0.07305\t0.0116\n7\t-0.00175\t0.1309\t0.1123\t0.0777\t0.012\n7.5\t-0.0018\t0.13815\t0.119\t0.08205\t0.0124\n8\t-0.00165\t0.1449\t0.1249\t0.08615\t0.0122\n8.5\t-0.0018\t0.1521\t0.1314\t0.0906\t0.0122\n9\t-0.00195\t0.15905\t0.1376\t0.09475\t0.01235';
+    var c = document.getElementById('tab-mm-inhibition').querySelector('.card');
+    c.querySelectorAll('.sub-tab-btn').forEach(function(b, i){b.classList.toggle('active', i === 0)});
+    document.getElementById('inh-sub-raw').classList.add('active'); document.getElementById('inh-sub-pct').classList.remove('active');
+    setStatus('inh-status', 'Example loaded. Click Plot & Analyze.', 'info');
+}
+
+function loadIC50Example(){
+    document.getElementById('inh-pct-input').value = '\t0\t1\t4\t8\t16\n\tCell 1\tCell 2\tCell 3\tCell 4\tCell 5\nmin\tA\tA\tA\tA\tA\n0\t0.0773\t0.06835\t0.0362\t0.0209\t0.01\n0.5\t0.09415\t0.0824\t0.0502\t0.02885\t0.014\n1\t0.1118\t0.09685\t0.0626\t0.0383\t0.0185\n1.5\t0.12785\t0.1107\t0.0742\t0.04675\t0.0225\n2\t0.14415\t0.1226\t0.0865\t0.0546\t0.027\n2.5\t0.16095\t0.13575\t0.09775\t0.0625\t0.031\n3\t0.1781\t0.1493\t0.1088\t0.0698\t0.035\n3.5\t0.1951\t0.1624\t0.1197\t0.07685\t0.039\n4\t0.2099\t0.17535\t0.13035\t0.0841\t0.043\n4.5\t0.2258\t0.18685\t0.1404\t0.0909\t0.047\n5\t0.23455\t0.21405\t0.1597\t0.11815\t0.07985\n5.5\t0.24695\t0.22645\t0.1705\t0.1267\t0.0865\n6\t0.2588\t0.2384\t0.1805\t0.13545\t0.09305\n6.5\t0.2698\t0.2496\t0.19095\t0.14445\t0.0996\n7\t0.28\t0.2604\t0.20065\t0.1531\t0.106\n7.5\t0.2895\t0.27065\t0.2101\t0.16135\t0.1123\n8\t0.2988\t0.2806\t0.2196\t0.16935\t0.11905\n8.5\t0.30775\t0.28985\t0.22845\t0.17695\t0.1254\n9\t0.31625\t0.29895\t0.2368\t0.18575\t0.13155';
+    var c = document.getElementById('tab-mm-inhibition').querySelector('.card');
+    c.querySelectorAll('.sub-tab-btn').forEach(function(b, i){b.classList.toggle('active', i === 1)});
+    document.getElementById('inh-sub-pct').classList.add('active'); document.getElementById('inh-sub-raw').classList.remove('active');
+    setStatus('inh-status', 'IC50 example loaded. Click Fit IC50.', 'info');
+}
+function loadW2Example(){
+    document.getElementById('w2-a1').value = '\t0\t10\t15\t25\t50\t75\t150\t175\t200\t400\n\tCell 1\tCell 1\tCell 2\tCell 2\tCell 3\tCell 3\tCell 4\tCell 4\tCell 5\tCell 5\nmin\tA\tA\tA\tA\tA\tA\tA\tA\tA\tA\n0\t0.0754\t0.05085\t0.05925\t0.0718\t0.0727\t0.0599\t0.0706\t0.05705\t0.0558\t0.0644\n0.5\t0.0752\t0.064\t0.0746\t0.0936\t0.0939\t0.0832\t0.0955\t0.0804\t0.08115\t0.091\n1\t0.07485\t0.0761\t0.08875\t0.1135\t0.1156\t0.10595\t0.1188\t0.10405\t0.1059\t0.11795\n1.5\t0.07495\t0.08655\t0.1022\t0.132\t0.13655\t0.1279\t0.14295\t0.1265\t0.1303\t0.14395\n2\t0.0748\t0.09585\t0.11435\t0.1501\t0.15705\t0.1522\t0.16545\t0.14865\t0.1542\t0.1701\n2.5\t0.0748\t0.10405\t0.12565\t0.1671\t0.17725\t0.1726\t0.1882\t0.17055\t0.17835\t0.19595\n3\t0.0749\t0.1113\t0.13595\t0.1835\t0.19635\t0.19465\t0.21075\t0.1917\t0.2024\t0.22175\n3.5\t0.0747\t0.1177\t0.1451\t0.19885\t0.21515\t0.2166\t0.23265\t0.21265\t0.22575\t0.2465\n4\t0.0743\t0.1231\t0.15385\t0.21335\t0.23275\t0.23745\t0.25475\t0.23425\t0.249\t0.27125\n4.5\t0.07455\t0.12765\t0.1621\t0.22695\t0.25\t0.2575\t0.2761\t0.25605\t0.27115\t0.296\n5\t0.07455\t0.1317\t0.16995\t0.23995\t0.26675\t0.27745\t0.299\t0.2783\t0.29365\t0.3206\n5.5\t0.07465\t0.13495\t0.17715\t0.2529\t0.28295\t0.29675\t0.3209\t0.3007\t0.316\t0.34395\n6\t0.07455\t0.13795\t0.1836\t0.2617\t0.2992\t0.3154\t0.3441\t0.32125\t0.3379\t0.3673\n6.5\t0.0746\t0.14045\t0.1894\t0.2721\t0.3151\t0.3337\t0.3644\t0.3422\t0.35935\t0.39225\n7\t0.07445\t0.1426\t0.1943\t0.28085\t0.32915\t0.35175\t0.3855\t0.36215\t0.3818\t0.41745\n7.5\t0.0744\t0.1445\t0.1989\t0.29065\t0.34285\t0.3702\t0.405\t0.3817\t0.40315\t0.44225\n8\t0.0746\t0.146\t0.20335\t0.29725\t0.35705\t0.3886\t0.42385\t0.39955\t0.42535\t0.4662\n8.5\t0.0746\t0.14725\t0.2069\t0.3045\t0.3712\t0.4063\t0.4422\t0.4187\t0.44565\t0.48945\n9\t0.07445\t0.1484\t0.21045\t0.31125\t0.38475\t0.42355\t0.46095\t0.43695\t0.46575\t0.5129';
+    document.getElementById('w2-a2').value = '\t0\t10\t15\t25\t50\t75\t150\t175\t200\t400\n\tCell 1\tCell 1\tCell 2\tCell 2\tCell 3\tCell 3\tCell 4\tCell 4\tCell 5\tCell 5\nmin\tA\tA\tA\tA\tA\tA\tA\tA\tA\tA\n0\t0.1131\t0.076275\t0.088875\t0.1077\t0.10905\t0.08985\t0.1059\t0.085575\t0.0837\t0.0966\n0.5\t0.1128\t0.096\t0.1119\t0.1404\t0.14085\t0.1248\t0.14325\t0.1206\t0.121725\t0.1365\n1\t0.112275\t0.11415\t0.133125\t0.17025\t0.1734\t0.158925\t0.1782\t0.156075\t0.15885\t0.176925\n1.5\t0.112425\t0.129825\t0.1533\t0.198\t0.204825\t0.19185\t0.214425\t0.18975\t0.19545\t0.215925\n2\t0.1122\t0.143775\t0.171525\t0.22515\t0.235575\t0.2283\t0.248175\t0.222975\t0.2313\t0.25515\n2.5\t0.1122\t0.156075\t0.188475\t0.25065\t0.265875\t0.2589\t0.2823\t0.255825\t0.267525\t0.293925\n3\t0.11235\t0.16695\t0.203925\t0.27525\t0.294525\t0.291975\t0.316125\t0.28755\t0.3036\t0.332625\n3.5\t0.11205\t0.17655\t0.21765\t0.298275\t0.322725\t0.3249\t0.348975\t0.318975\t0.338625\t0.36975\n4\t0.11145\t0.18465\t0.230775\t0.320025\t0.349125\t0.356175\t0.382125\t0.351375\t0.3735\t0.406875\n4.5\t0.111825\t0.191475\t0.24315\t0.340425\t0.375\t0.38625\t0.41415\t0.384075\t0.406725\t0.444\n5\t0.111825\t0.19755\t0.254925\t0.359925\t0.400125\t0.416175\t0.4485\t0.41745\t0.440475\t0.4809\n5.5\t0.111975\t0.202425\t0.265725\t0.37935\t0.424425\t0.445125\t0.48135\t0.45105\t0.474\t0.515925\n6\t0.111825\t0.206925\t0.2754\t0.39255\t0.4488\t0.4731\t0.51615\t0.481875\t0.50685\t0.55095\n6.5\t0.1119\t0.210675\t0.2841\t0.40815\t0.47265\t0.50055\t0.5466\t0.5133\t0.539025\t0.588375\n7\t0.111675\t0.2139\t0.29145\t0.421275\t0.493725\t0.527625\t0.57825\t0.543225\t0.5727\t0.626175\n7.5\t0.1116\t0.21675\t0.29835\t0.435975\t0.514275\t0.5553\t0.6075\t0.57255\t0.604725\t0.663375\n8\t0.1119\t0.219\t0.305025\t0.445875\t0.535575\t0.5829\t0.635775\t0.599325\t0.638025\t0.6993\n8.5\t0.1119\t0.220875\t0.31035\t0.45675\t0.5568\t0.60945\t0.6633\t0.62805\t0.668475\t0.734175\n9\t0.111675\t0.2226\t0.315675\t0.466875\t0.577125\t0.635325\t0.691425\t0.655425\t0.698625\t0.76935';
+    document.getElementById('w2-a3').value = '\t0\t10\t15\t25\t50\t75\t150\t175\t200\t400\n\tCell 1\tCell 1\tCell 2\tCell 2\tCell 3\tCell 3\tCell 4\tCell 4\tCell 5\tCell 5\nmin\tA\tA\tA\tA\tA\tA\tA\tA\tA\tA\n0\t0.05655\t0.0381375\t0.0444375\t0.05385\t0.054525\t0.044925\t0.05295\t0.0427875\t0.04185\t0.0483\n0.5\t0.0564\t0.048\t0.05595\t0.0702\t0.070425\t0.0624\t0.071625\t0.0603\t0.0608625\t0.06825\n1\t0.0561375\t0.057075\t0.0665625\t0.085125\t0.0867\t0.0794625\t0.0891\t0.0780375\t0.079425\t0.0884625\n1.5\t0.0562125\t0.0649125\t0.07665\t0.099\t0.1024125\t0.095925\t0.1072125\t0.094875\t0.097725\t0.1079625\n2\t0.0561\t0.0718875\t0.0857625\t0.112575\t0.1177875\t0.11415\t0.1240875\t0.1114875\t0.11565\t0.127575\n2.5\t0.0561\t0.0780375\t0.0942375\t0.125325\t0.1329375\t0.12945\t0.14115\t0.1279125\t0.1337625\t0.1469625\n3\t0.056175\t0.083475\t0.1019625\t0.137625\t0.1472625\t0.1459875\t0.1580625\t0.143775\t0.1518\t0.1663125\n3.5\t0.056025\t0.088275\t0.108825\t0.1491375\t0.1613625\t0.16245\t0.1744875\t0.1594875\t0.1693125\t0.184875\n4\t0.055725\t0.092325\t0.1153875\t0.1600125\t0.1745625\t0.1780875\t0.1910625\t0.1756875\t0.18675\t0.2034375\n4.5\t0.0559125\t0.0957375\t0.121575\t0.1702125\t0.1875\t0.193125\t0.207075\t0.1920375\t0.2033625\t0.222\n5\t0.0559125\t0.098775\t0.1274625\t0.1799625\t0.2000625\t0.2080875\t0.22425\t0.208725\t0.2202375\t0.24045\n5.5\t0.0559875\t0.1012125\t0.1328625\t0.189675\t0.2122125\t0.2225625\t0.240675\t0.225525\t0.237\t0.2579625\n6\t0.0559125\t0.1034625\t0.1377\t0.196275\t0.2244\t0.23655\t0.258075\t0.2409375\t0.253425\t0.275475\n6.5\t0.05595\t0.1053375\t0.14205\t0.204075\t0.236325\t0.250275\t0.2733\t0.25665\t0.2695125\t0.2941875\n7\t0.0558375\t0.10695\t0.145725\t0.2106375\t0.2468625\t0.2638125\t0.289125\t0.2716125\t0.28635\t0.3130875\n7.5\t0.0558\t0.108375\t0.149175\t0.2179875\t0.2571375\t0.27765\t0.30375\t0.286275\t0.3023625\t0.3316875\n8\t0.05595\t0.1095\t0.1525125\t0.2229375\t0.2677875\t0.29145\t0.3178875\t0.2996625\t0.3190125\t0.34965\n8.5\t0.05595\t0.1104375\t0.155175\t0.228375\t0.2784\t0.304725\t0.33165\t0.314025\t0.3342375\t0.3670875\n9\t0.0558375\t0.1113\t0.1578375\t0.2334375\t0.2885625\t0.3176625\t0.3457125\t0.3277125\t0.3493125\t0.384675';
+    document.getElementById('w2-a4').value = '\t0\t10\t15\t25\t50\t75\t150\t175\t200\t400\n\tCell 1\tCell 1\tCell 2\tCell 2\tCell 3\tCell 3\tCell 4\tCell 4\tCell 5\tCell 5\nmin\tA\tA\tA\tA\tA\tA\tA\tA\tA\tA\n0\t0.084825\t0.05720625\t0.06665625\t0.080775\t0.0817875\t0.0673875\t0.079425\t0.06418125\t0.062775\t0.07245\n0.5\t0.0846\t0.072\t0.083925\t0.1053\t0.1056375\t0.0936\t0.1074375\t0.09045\t0.09129375\t0.102375\n1\t0.08420625\t0.0856125\t0.09984375\t0.1276875\t0.13005\t0.11919375\t0.13365\t0.11705625\t0.1191375\t0.13269375\n1.5\t0.08431875\t0.09736875\t0.114975\t0.1485\t0.15361875\t0.1438875\t0.16081875\t0.1423125\t0.1465875\t0.16194375\n2\t0.08415\t0.10783125\t0.12864375\t0.1688625\t0.17668125\t0.171225\t0.18613125\t0.16723125\t0.173475\t0.1913625\n2.5\t0.08415\t0.11705625\t0.14135625\t0.1879875\t0.19940625\t0.194175\t0.211725\t0.19186875\t0.20064375\t0.22044375\n3\t0.0842625\t0.1252125\t0.15294375\t0.2064375\t0.22089375\t0.21898125\t0.23709375\t0.2156625\t0.2277\t0.24946875\n3.5\t0.0840375\t0.1324125\t0.1632375\t0.22370625\t0.24204375\t0.243675\t0.26173125\t0.23923125\t0.25396875\t0.2773125\n4\t0.0835875\t0.1384875\t0.17308125\t0.24001875\t0.26184375\t0.26713125\t0.28659375\t0.26353125\t0.280125\t0.30515625\n4.5\t0.08386875\t0.14360625\t0.1823625\t0.25531875\t0.28125\t0.2896875\t0.3106125\t0.28805625\t0.30504375\t0.333\n5\t0.08386875\t0.1481625\t0.19119375\t0.26994375\t0.30009375\t0.31213125\t0.336375\t0.3130875\t0.33035625\t0.360675\n5.5\t0.08398125\t0.15181875\t0.19929375\t0.2845125\t0.31831875\t0.33384375\t0.3610125\t0.3382875\t0.3555\t0.38694375\n6\t0.08386875\t0.15519375\t0.20655\t0.2944125\t0.3366\t0.354825\t0.3871125\t0.36140625\t0.3801375\t0.4132125\n6.5\t0.083925\t0.15800625\t0.213075\t0.3061125\t0.3544875\t0.3754125\t0.40995\t0.384975\t0.40426875\t0.44128125\n7\t0.08375625\t0.160425\t0.2185875\t0.31595625\t0.37029375\t0.39571875\t0.4336875\t0.40741875\t0.429525\t0.46963125\n7.5\t0.0837\t0.1625625\t0.2237625\t0.32698125\t0.38570625\t0.416475\t0.455625\t0.4294125\t0.45354375\t0.49753125\n8\t0.083925\t0.16425\t0.22876875\t0.33440625\t0.40168125\t0.437175\t0.47683125\t0.44949375\t0.47851875\t0.524475\n8.5\t0.083925\t0.16565625\t0.2327625\t0.3425625\t0.4176\t0.4570875\t0.497475\t0.4710375\t0.50135625\t0.55063125\n9\t0.08375625\t0.16695\t0.23675625\t0.35015625\t0.43284375\t0.47649375\t0.51856875\t0.49156875\t0.52396875\t0.5770125';
+    setStatus('w2-status', 'Example loaded for all 4 \u03B1 conditions. Click Compare Curves.', 'info');
+}
+</script>
+</body>
+</html>
