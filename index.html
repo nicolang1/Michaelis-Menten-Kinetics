@@ -145,18 +145,32 @@
             <b>Raw A405 vs Time:</b> Paste data with inhibitor names in Row 1. Generates plot + velocity table.<br>
             <b></b><br>
             <b>% Inhibition &amp; IC50:</b> Row 1 = inhibitor concentrations. Calculates slopes, % inhibition, fits IC50.</div>
-        <details class="settings-panel"><summary>&#9881;&#65039; Graph &amp; Fit Settings</summary>
+		<details class="settings-panel"><summary>&#9881;&#65039; Graph &amp; Fit Settings</summary>
     		<div class="settings-grid">
-        		<div class="setting-item"><label>Raw Plot Title</label><input id="inh-raw-title" value="Inhibitor Preincubation"></div>
-       			<div class="setting-item"><label>Raw X-Axis</label><input id="inh-raw-x-label" value="Time (min)"></div>
-        		<div class="setting-item"><label>Raw Y-Axis</label><input id="inh-raw-y-label" value="A405"></div>
-        		<div class="setting-item"><label>IC50 Plot Title</label><input id="inh-ic50-title" value="Alkaline Phosphatase Inhibition - IC50"></div>
-        		<div class="setting-item"><label>IC50 X-Axis</label><input id="inh-ic50-x-label" value="[Inhibitor] (&#181;M)"></div>
+        		<div class="setting-item"><label>Raw Plot Title</label><input id="inh-raw-title" value="CIAP Inhibition using (Inhibitor you are testing)"></div>
+        		<div class="setting-item"><label>Raw X-Axis</label><input id="inh-raw-x-label" value="Time (min)"></div>
+       		 	<div class="setting-item"><label>Raw Y-Axis</label><input id="inh-raw-y-label" value="A405"></div>
+        		<div class="setting-item"><label>IC50 Plot Title</label><input id="inh-ic50-title" value="CIAP Inhibition using (Inhibitor you are testing) - IC50"></div>
+        		<div class="setting-item"><label>IC50 X-Axis</label><input id="inh-ic50-x-label" value="[Inhibitor you are testing] (mM)"></div>
         		<div class="setting-item"><label>IC50 Y-Axis</label><input id="inh-ic50-y-label" value="% Inhibition"></div>
-       			<div class="setting-item"><label>Velocity Units</label><input id="inh-vel-units" value="&#916;A405/min"></div>
-        		<div class="setting-item"><label>Concentration Units</label><input id="inh-conc-units" value="&#181;M"></div>
+        		<div class="setting-item"><label>Velocity Units</label><input id="inh-vel-units" value="&#916;A405/min"></div>
+        		<div class="setting-item"><label>Concentration Units</label><input id="inh-conc-units" value="mM"></div>
         		<div class="setting-item"><label>Time Range</label><div style="display:flex;gap:6px"><input type="number" id="inh-time-min" placeholder="Auto" step="any" style="width:48%"><input type="number" id="inh-time-max" placeholder="Auto" step="any" style="width:48%"></div></div>
-    		</div></details>
+        		<div class="setting-item">
+            		<label for="ic50-extrap-factor">IC50 Extrapolation Factor</label>
+            		<input type="number" id="ic50-extrap-factor" value="3" min="1" max="50" step="0.5"
+                   		title="Multiplier beyond your max [Inhibitor]. Increase to see where 100% inhibition is reached.">
+        		</div>
+        		<div class="setting-item">
+            		<label for="ic50-ref-method">Reference Velocity for % Inhibition</label>
+            		<select id="ic50-ref-method">
+                		<option value="max" selected>Maximum observed slope (recommended)</option>
+                		<option value="lowest">Lowest concentration slope</option>
+                		<option value="zero">First column (0 mM control)</option>
+            		</select>
+        		</div>
+    		</div>
+		</details>
         <div class="sub-tabs">
             <button class="sub-tab-btn active" onclick="switchSubTab('inh','raw',this)">Raw A405 vs Time</button>
             <button class="sub-tab-btn" onclick="switchSubTab('inh','pct',this)">% Inhibition &amp; IC50</button>
@@ -209,13 +223,13 @@
         <details class="settings-panel"><summary>&#9881;&#65039; Graph &amp; Fit Settings</summary>
      <div class="settings-grid">
         <div class="setting-item"><label>MM Plot Title</label><input id="w2-plot-title" value="Alkaline Phosphatase Kinetics - Multiple Inhibitor Conditions"></div>
-         <div class="setting-item"><label>MM X-Axis</label><input id="w2-x-label" value="[pNPP] (&#181;M)"></div>
+         <div class="setting-item"><label>MM X-Axis</label><input id="w2-x-label" value="[pNPP] (mM)"></div>
          <div class="setting-item"><label>MM Y-Axis</label><input id="w2-y-label" value="Initial Velocity (V&#8320;)"></div>
          <div class="setting-item"><label>Raw Plot Title</label><input id="w2-raw-title" value="Raw A405 vs Time - All Conditions"></div>
          <div class="setting-item"><label>Raw X-Axis</label><input id="w2-raw-x-label" value="Time (min)"></div>
          <div class="setting-item"><label>Raw Y-Axis</label><input id="w2-raw-y-label" value="A405"></div>
          <div class="setting-item"><label>Velocity Units</label><input id="w2-vel-units" value="&#916;A405/min"></div>
-         <div class="setting-item"><label>Substrate Units</label><input id="w2-sub-units" value="&#181;M"></div>
+         <div class="setting-item"><label>Substrate Units</label><input id="w2-sub-units" value="mM"></div>
          <div class="setting-item"><label>Time Range</label><div style="display:flex;gap:6px"><input type="number" id="w2-time-min" placeholder="Auto" step="any" style="width:48%"><input type="number" id="w2-time-max" placeholder="Auto" step="any" style="width:48%"></div></div>
      </div></details>
         <div class="cb-row"><input type="checkbox" id="w2-avg-reps" checked><label for="w2-avg-reps">Average replicate concentrations</label></div>
@@ -664,31 +678,186 @@ function processInhIC50(){
         var r = rawTableToSlopes(text, avgReps, range);
         showDebug('inh-debug', r.debug);
         var time = r.time, cols = r.columns, vels = r.vels;
-        var rawTitle = document.getElementById('inh-raw-title').value, rawXL = document.getElementById('inh-raw-x-label').value, rawYL = document.getElementById('inh-raw-y-label').value;
+        var rawTitle = document.getElementById('inh-raw-title').value,
+            rawXL = document.getElementById('inh-raw-x-label').value,
+            rawYL = document.getElementById('inh-raw-y-label').value;
         plotRawWithFits('plot-inh-ic50-raw', rawTitle, rawXL, rawYL, time, cols, range);
-        var th = '<div class="section-label">Calculated Initial Velocities</div><table class="vel-table"><thead><tr><th>[Inhibitor] (\u00B5M)</th><th>Slope (\u0394A405/min)</th><th>Intercept</th><th>R\u00B2</th><th>Reps</th></tr></thead><tbody>';
-        for(var i = 0; i < vels.length; i++) th += '<tr><td>' + vels[i].conc + '</td><td>' + vels[i].slope.toExponential(4) + '</td><td>' + vels[i].intercept.toFixed(5) + '</td><td>' + vels[i].r2.toFixed(4) + '</td><td>' + (vels[i].reps || 1) + '</td></tr>';
-        th += '</tbody></table>'; document.getElementById('inh-ic50-vel-table').innerHTML = th;
-        var maxSlope = -Infinity;
-        for(var i = 0; i < vels.length; i++){if(vels[i].slope > maxSlope) maxSlope = vels[i].slope}
-        if(maxSlope <= 0){setStatus('inh-status', 'All slopes are zero or negative.', 'error'); return}
+
+        /* ── Read concentration units from settings (FIX #3: units bug) ── */
+        var concUnits = 'mM'; // fallback
+        var concUnitsEl = document.getElementById('inh-conc-units');
+        if(concUnitsEl && concUnitsEl.value.trim()) concUnits = concUnitsEl.value.trim();
+
+        var velUnits = '\u0394A405/min';
+        var velUnitsEl = document.getElementById('inh-vel-units');
+        if(velUnitsEl && velUnitsEl.value.trim()) velUnits = velUnitsEl.value.trim();
+
+        /* ── Velocity Table ── */
+        var th = '<div class="section-label">Calculated Initial Velocities</div>' +
+            '<table class="vel-table"><thead><tr>' +
+            '<th>[Inhibitor] (' + concUnits + ')</th>' +
+            '<th>Slope (' + velUnits + ')</th>' +
+            '<th>Intercept</th><th>R\u00B2</th><th>Reps</th>' +
+            '</tr></thead><tbody>';
+        for(var i = 0; i < vels.length; i++){
+            th += '<tr><td>' + vels[i].conc + '</td><td>' + vels[i].slope.toExponential(4) +
+                '</td><td>' + vels[i].intercept.toFixed(5) + '</td><td>' +
+                vels[i].r2.toFixed(4) + '</td><td>' + (vels[i].reps || 1) + '</td></tr>';
+        }
+        th += '</tbody></table>';
+        document.getElementById('inh-ic50-vel-table').innerHTML = th;
+
+        /* ══════════════════════════════════════════════════════════════
+           Reference velocity selection
+           ══════════════════════════════════════════════════════════════ */
+        var refMethod = 'max';
+        var refSelect = document.getElementById('ic50-ref-method');
+        if(refSelect) refMethod = refSelect.value;
+
+        var refSlope;
+        if(refMethod === 'zero'){
+            // Use the first column (index 0), assumed to be 0 mM control
+            refSlope = vels[0].slope;
+        } else if(refMethod === 'lowest'){
+            // Use the slope of the lowest concentration
+            var lowestIdx = 0, lowestConc = Infinity;
+            for(var i = 0; i < vels.length; i++){
+                if(vels[i].conc <= lowestConc){
+                    lowestConc = vels[i].conc;
+                    lowestIdx = i;
+                }
+            }
+            refSlope = vels[lowestIdx].slope;
+        } else {
+            // 'max' — use the maximum observed slope (most robust to noise)
+            refSlope = -Infinity;
+            for(var i = 0; i < vels.length; i++){
+                if(vels[i].slope > refSlope) refSlope = vels[i].slope;
+            }
+        }
+
+        if(refSlope <= 0){
+            setStatus('inh-status', 'Reference slope is zero or negative. Check your data or change the reference method in settings.', 'error');
+            return;
+        }
+
+        /* ── Calculate % Inhibition ── */
         var inhConc = [], pctInh = [];
-        for(var i = 0; i < vels.length; i++){var pct = (1 - vels[i].slope / maxSlope) * 100; if(pct < 0) pct = 0; inhConc.push(vels[i].conc); pctInh.push(pct)}
+        for(var i = 0; i < vels.length; i++){
+            var pct = (1 - vels[i].slope / refSlope) * 100;
+            if(pct < 0) pct = 0;
+            inhConc.push(vels[i].conc);
+            pctInh.push(pct);
+        }
+
         var fX = [], fY = [];
-        for(var i = 0; i < inhConc.length; i++){fX.push(inhConc[i]); fY.push(pctInh[i])}
-        if(fX.length < 2){setStatus('inh-status', 'Not enough positive inhibition data for IC50 fit.', 'error'); return}
+        for(var i = 0; i < inhConc.length; i++){
+            fX.push(inhConc[i]);
+            fY.push(pctInh[i]);
+        }
+        if(fX.length < 2){
+            setStatus('inh-status', 'Not enough positive inhibition data for IC50 fit.', 'error');
+            return;
+        }
+
+        /* ── Fit IC50 (reusing MM math) ── */
         var fit = fitMM(fX, fY);
         var Imax = fit.Vmax, IC50 = fit.Km, r2 = fit.r2;
-        document.getElementById('inh-ic50-equation').innerHTML = '% Inhibition = ' + Imax.toFixed(2) + ' \u00D7 [I] / (' + IC50.toFixed(2) + ' + [I])';
-        document.getElementById('inh-ic50-params').innerHTML = '<div class="param-card"><div class="param-label">I<sub>max</sub></div><div class="param-value">' + Imax.toFixed(2) + '</div><div class="param-unit">%</div></div><div class="param-card"><div class="param-label">IC<sub>50</sub></div><div class="param-value">' + IC50.toFixed(2) + '</div><div class="param-unit">\u00B5M</div></div><div class="param-card"><div class="param-label">R\u00B2</div><div class="param-value">' + r2.toFixed(4) + '</div></div><div class="param-card"><div class="param-label">Data Points</div><div class="param-value">' + fX.length + '</div></div>';
-        var xMax = Math.max.apply(null, inhConc) * 1.2, cx = [], cy = [];
-        for(var i = 0; i <= 300; i++){var xi = xMax * i / 300; cx.push(xi); cy.push(Imax * xi / (IC50 + xi))}
-        var ic50Title = document.getElementById('inh-ic50-title') ? document.getElementById('inh-ic50-title').value : 'Alkaline Phosphatase Inhibition \u2014 IC50';
-        var ic50XL = document.getElementById('inh-ic50-x-label') ? document.getElementById('inh-ic50-x-label').value : '[Inhibitor] (\u00B5M)';
-        var ic50YL = document.getElementById('inh-ic50-y-label') ? document.getElementById('inh-ic50-y-label').value : '% Inhibition';
-        Plotly.newPlot('plot-inh-ic50', [{x: fX, y: fY, mode: 'markers', type: 'scatter', name: 'Experimental Data<br>% Inh = ' + Imax.toFixed(2) + ' * [I] / (' + IC50.toFixed(2) + ' + [I])<br>IC50 = ' + IC50.toFixed(2) + ' \u00B5M<br>R\u00B2: ' + r2.toFixed(4), marker: {color: '#0072B2', size: 9}}, {x: cx, y: cy, mode: 'lines', type: 'scatter', line: {color: '#0072B2', width: 2, dash: 'dash'}, showlegend: false}], baseLayout(ic50Title, ic50XL, ic50YL, {yaxis: {rangemode: 'tozero'}, xaxis: {rangemode: 'tozero'}}), {responsive: true, toImageButtonOptions: {format: 'png', width: 888, height: 480, scale: 10}});
-        document.getElementById('inh-results').style.display = 'block'; document.getElementById('inh-raw-section').style.display = 'none'; document.getElementById('inh-ic50-section').style.display = 'block';
-        setStatus('inh-status', 'IC50 fitted. IC50 = ' + IC50.toFixed(2) + ' \u00B5M, Imax = ' + Imax.toFixed(2) + '%', 'success');
+
+        /* ── Display equation and params (FIX #3: use concUnits not µM) ── */
+        document.getElementById('inh-ic50-equation').innerHTML =
+            '% Inhibition = ' + Imax.toFixed(2) + ' \u00D7 [I] / (' + IC50.toFixed(2) + ' + [I])';
+
+        document.getElementById('inh-ic50-params').innerHTML =
+            '<div class="param-card"><div class="param-label">I<sub>max</sub></div>' +
+            '<div class="param-value">' + Imax.toFixed(2) + '</div>' +
+            '<div class="param-unit">%</div></div>' +
+            '<div class="param-card"><div class="param-label">IC<sub>50</sub></div>' +
+            '<div class="param-value">' + IC50.toFixed(2) + '</div>' +
+            '<div class="param-unit">' + concUnits + '</div></div>' +
+            '<div class="param-card"><div class="param-label">R\u00B2</div>' +
+            '<div class="param-value">' + r2.toFixed(4) + '</div></div>' +
+            '<div class="param-card"><div class="param-label">Data Points</div>' +
+            '<div class="param-value">' + fX.length + '</div></div>';
+
+        /* ══════════════════════════════════════════════════════════════
+           Extrapolation of the IC50 trendline
+           ══════════════════════════════════════════════════════════════ */
+        var extraFactor = 1.2; // fallback: original behavior
+        var extraInput = document.getElementById('ic50-extrap-factor');
+        if(extraInput){
+            var parsed = parseFloat(extraInput.value);
+            if(!isNaN(parsed) && parsed > 0) extraFactor = parsed;
+        }
+
+        var dataXMax = Math.max.apply(null, inhConc);
+        var xMax = dataXMax * extraFactor;
+
+        // Generate the fit curve points over the extrapolated range
+        var cx = [], cy = [];
+        for(var i = 0; i <= 300; i++){
+            var xi = xMax * i / 300;
+            cx.push(xi);
+            cy.push(Imax * xi / (IC50 + xi));
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           100% inhibition reference line
+           ══════════════════════════════════════════════════════════════ */
+        var refLine100 = {
+            x: [0, xMax],
+            y: [100, 100],
+            mode: 'lines',
+            type: 'scatter',
+            line: {color: 'rgba(200,0,0,0.5)', width: 2, dash: 'dot'},
+            name: '100% Inhibition',
+            hoverinfo: 'name'
+        };
+
+        /* ── Build the plot ── */
+        var ic50Title = document.getElementById('inh-ic50-title') ?
+            document.getElementById('inh-ic50-title').value :
+            'Alkaline Phosphatase Inhibition \u2014 IC50';
+        var ic50XL = document.getElementById('inh-ic50-x-label') ?
+            document.getElementById('inh-ic50-x-label').value :
+            '[Inhibitor] (' + concUnits + ')';
+        var ic50YL = document.getElementById('inh-ic50-y-label') ?
+            document.getElementById('inh-ic50-y-label').value :
+            '% Inhibition';
+
+        Plotly.newPlot('plot-inh-ic50', [
+            // Experimental data points
+            {
+                x: fX, y: fY, mode: 'markers', type: 'scatter',
+                name: 'Experimental Data<br>% Inh = ' + Imax.toFixed(2) +
+                    ' * [I] / (' + IC50.toFixed(2) + ' + [I])<br>IC50 = ' +
+                    IC50.toFixed(2) + ' ' + concUnits + '<br>R\u00B2: ' + r2.toFixed(4),
+                marker: {color: '#0072B2', size: 9}
+            },
+            // Fit curve (extrapolated)
+            {
+                x: cx, y: cy, mode: 'lines', type: 'scatter',
+                line: {color: '#0072B2', width: 2, dash: 'dash'},
+                showlegend: false
+            },
+            // 100% inhibition reference line
+            refLine100
+        ],
+        baseLayout(ic50Title, ic50XL, ic50YL, {
+            yaxis: {rangemode: 'tozero'},
+            xaxis: {rangemode: 'tozero', range: [0, xMax]}
+        }),
+        {responsive: true, toImageButtonOptions: {format: 'png', width: 888, height: 480, scale: 10}});
+
+        document.getElementById('inh-results').style.display = 'block';
+        document.getElementById('inh-raw-section').style.display = 'none';
+        document.getElementById('inh-ic50-section').style.display = 'block';
+
+        setStatus('inh-status',
+            'IC50 fitted. IC50 = ' + IC50.toFixed(2) + ' ' + concUnits +
+            ', Imax = ' + Imax.toFixed(2) + '% (Ref: ' + refMethod + ')',
+            'success');
+
     } catch(e){setStatus('inh-status', 'Error: ' + e.message, 'error')}
 }
 /* ===== WEEK 2 ===== */
